@@ -1,7 +1,7 @@
 #include "../config-reader/config-reader.h"
 
-#ifndef STATSD_DATAGRAM_
-#define STATSD_DATAGRAM_
+#ifndef STATSD_PARSERS_
+#define STATSD_PARSERS_
 
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;

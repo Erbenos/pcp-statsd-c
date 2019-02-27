@@ -8,17 +8,20 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_LIBS_DIRS = -I./lib/__headers__
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+LDFLAGS := -L./lib/github.com/HdrHistogram/HdrHistogram_c
+LDLIBS := -lhdr_histogram_static -lm
 
-CFLAGS ?=-Wall -Wextra $(INC_FLAGS) -MMD -MP -g
+CFLAGS ?=-Wall -Wextra $(INC_LIBS_DIRS) $(INC_FLAGS) -MMD -MP -g
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c
 	$(MKDIR_P) $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 .PHONY: clean
 

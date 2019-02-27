@@ -3,8 +3,7 @@
 
 #include "config-reader/config-reader.h"
 #include "statsd-parsers/statsd-parsers.h"
-
-struct hdr_histogram* histogram;
+#include "histograms/histograms.h"
 
 int main(int argc, char **argv)
 {
@@ -12,6 +11,7 @@ int main(int argc, char **argv)
     int config_src_type = argc >= 2 ? READ_FROM_CMD : READ_FROM_FILE;
     config = read_agent_config(config_src_type, "config", argc, argv);
     print_agent_config(config);
-    statsd_parser_listen(config, config->parser_type, print_out_datagram);
+    // first lets record stuff and worry about sharing it accross program later
+    statsd_parser_listen(config, config->parser_type, consume_datagram);
     return 1;
 }
