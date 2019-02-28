@@ -37,17 +37,21 @@ int categorize_datagram(struct statsd_datagram* datagram) {
 }
 
 void print_histograms() {
-    FILE *histogram_target = fopen("histogram_output.csv", "a+");
-    if (counter_histogram == NULL) {
-        hdr_percentiles_print(counter_histogram, histogram_target, 5, 1.0, CSV);
+    FILE *hdr_counter_target = fopen("hdr_counter.csv", "w+");
+    FILE *hdr_gauge_target = fopen("hdr_gauge.csv", "w+");
+    FILE *hdr_duration_target = fopen("hdr_duration.csv", "w+");
+    if (counter_histogram != NULL) {
+        hdr_percentiles_print(counter_histogram, hdr_counter_target, 3, 1.0, CSV);
     }
-    if (gauge_histogram == NULL) {
-        hdr_percentiles_print(gauge_histogram, histogram_target, 5, 1.0, CSV);
+    if (gauge_histogram != NULL) {
+        hdr_percentiles_print(gauge_histogram, hdr_gauge_target, 3, 1.0, CSV);
     }
-    if (duration_histogram == NULL) {
-        hdr_percentiles_print(duration_histogram, histogram_target, 5, 1.0, CSV);
+    if (duration_histogram != NULL) {
+        hdr_percentiles_print(duration_histogram, hdr_duration_target, 3, 1.0, CSV);
     }
-    fclose(histogram_target);
+    fclose(hdr_counter_target);
+    fclose(hdr_gauge_target);
+    fclose(hdr_duration_target);
 }
 
 void consume_datagram(struct statsd_datagram* datagram) {
@@ -57,7 +61,7 @@ void consume_datagram(struct statsd_datagram* datagram) {
         warn(__LINE__, "Unable to categorize datagram, throwing out.");
     }
     consumed_datagrams++;
-    if (consumed_datagrams % 20 == 0) {
+    if (consumed_datagrams % 200 == 0) {
         warn(__LINE__, "Printed output.");
         print_histograms();
     }
