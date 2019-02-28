@@ -14,7 +14,6 @@ int main(int argc, char **argv)
     init_loggers(config);
     print_agent_config(config);
     // first lets record stuff and worry about sharing it accross program later
-    verbose_log("wohayo");
     statsd_parser_listen(config, config->parser_type, consume_datagram);
     return 1;
 }
