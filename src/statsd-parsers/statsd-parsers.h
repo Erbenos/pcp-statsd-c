@@ -6,6 +6,7 @@
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;
 
+
 typedef struct statsd_datagram
 {
     char *data_namespace;
@@ -18,11 +19,23 @@ typedef struct statsd_datagram
     char *sampling;
 } statsd_datagram;
 
-/*
- * Parses statsd datagrams based on provided agent_config 
- * with given parser_type
- * */
-void statsd_parser_listen(agent_config* config, int parser_type, void (*callback)(statsd_datagram*));
+typedef struct statsd_listener_args
+{
+    agent_config* config;
+} statsd_listener_args;
+
+statsd_listener_args* create_listener_args(agent_config* config);
+
+void* statsd_network_listen(void* args);
+
+typedef struct statsd_parser_args
+{
+    agent_config* config;
+} statsd_parser_args;
+
+statsd_parser_args* create_parser_args(agent_config* config);
+
+void* statsd_parser_consume(void* args);
 
 void print_out_datagram(statsd_datagram* datagram);
 

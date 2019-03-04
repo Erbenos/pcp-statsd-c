@@ -13,16 +13,10 @@
 const int PARSER_TRIVIAL = 0;
 const int PARSER_RAGEL = 1;
 
-void statsd_parser_listen(agent_config* config, int parser_type, void (*callback)(statsd_datagram*)) {
-    if (!(parser_type == PARSER_TRIVIAL || parser_type == PARSER_RAGEL)) {
-        die(__LINE__, "Incorrect parser type given.");
-    }
+void* statsd_network_listen(void* args) {
+    agent_config* config = ((statsd_listener_args*)args)->config;
     void (*handle_datagram)(char[], ssize_t, void (statsd_datagram*));
-    if (parser_type == PARSER_TRIVIAL) {
-        handle_datagram = &basic_parser_parse;
-    } else {
-        // handle_datagram = &ragel_parses_parse;
-    }
+    handle_datagram = &basic_parser_parse;
     const char* hostname = 0;
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -60,11 +54,29 @@ void statsd_parser_listen(agent_config* config, int parser_type, void (*callback
         else if ((signed int)count == max_udp_packet_size) { 
             warn(__LINE__, "datagram too large for buffer: truncated and skipped");
         } else {
-            handle_datagram(buffer, count, callback);
+            handle_datagram(buffer, count, print_out_datagram);
         }
         memset(buffer, 0, max_udp_packet_size);
     }
     free(buffer);
+    return NULL;
+}
+
+
+// In case we need different params for different threads
+statsd_listener_args* create_listener_args(agent_config* config) {
+    struct statsd_listener_args* listener_args = (struct statsd_listener_args*) malloc(sizeof(struct statsd_listener_args));
+    listener_args->config = (agent_config*) malloc(sizeof(agent_config*));
+    listener_args->config = config;
+    return listener_args;
+}
+
+// In case we need different params for different threads
+statsd_parser_args* create_parser_args(agent_config* config) {
+    struct statsd_parser_args* parser_args = (struct statsd_parser_args*) malloc(sizeof(struct statsd_parser_args));
+    parser_args->config = (agent_config*) malloc(sizeof(agent_config*));
+    parser_args->config = config;
+    return parser_args;
 }
 
 void print_out_datagram(statsd_datagram* datagram) {
@@ -87,4 +99,8 @@ void free_datagram(statsd_datagram* datagram) {
     free(datagram->type);
     free(datagram->sampling);
     free(datagram);
+}
+
+void* statsd_parser_consume(void* args) {
+    return NULL;
 }
