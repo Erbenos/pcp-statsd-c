@@ -6,6 +6,7 @@
 #include "statsd-parsers/statsd-parsers.h"
 #include "histograms/histograms.h"
 #include "utils/utils.h"
+#include "utils/queue.h"
 
 int main(int argc, char **argv)
 {
@@ -13,6 +14,9 @@ int main(int argc, char **argv)
     pthread_t datagram_parser;
 
     agent_config* config = (agent_config*) malloc(sizeof(agent_config));
+    if (config == NULL) {
+        die(__LINE__, "Unable to assign memory for agent config.");
+    }
     int config_src_type = argc >= 2 ? READ_FROM_CMD : READ_FROM_FILE;
     config = read_agent_config(config_src_type, "config", argc, argv);
     init_loggers(config);

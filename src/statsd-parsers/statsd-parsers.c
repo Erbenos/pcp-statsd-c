@@ -54,7 +54,7 @@ void* statsd_network_listen(void* args) {
         else if ((signed int)count == max_udp_packet_size) { 
             warn(__LINE__, "datagram too large for buffer: truncated and skipped");
         } else {
-            handle_datagram(buffer, count, print_out_datagram);
+            // handle_datagram(buffer, count, print_out_datagram);
         }
         memset(buffer, 0, max_udp_packet_size);
     }
@@ -66,6 +66,9 @@ void* statsd_network_listen(void* args) {
 // In case we need different params for different threads
 statsd_listener_args* create_listener_args(agent_config* config) {
     struct statsd_listener_args* listener_args = (struct statsd_listener_args*) malloc(sizeof(struct statsd_listener_args));
+    if (listener_args == NULL) {
+        die(__LINE__, "Unable to assign memory for listener arguments.");
+    }
     listener_args->config = (agent_config*) malloc(sizeof(agent_config*));
     listener_args->config = config;
     return listener_args;
@@ -74,6 +77,9 @@ statsd_listener_args* create_listener_args(agent_config* config) {
 // In case we need different params for different threads
 statsd_parser_args* create_parser_args(agent_config* config) {
     struct statsd_parser_args* parser_args = (struct statsd_parser_args*) malloc(sizeof(struct statsd_parser_args));
+    if (parser_args == NULL) {
+        die(__LINE__, "Unable to assign memory for parser arguments.");
+    }
     parser_args->config = (agent_config*) malloc(sizeof(agent_config*));
     parser_args->config = config;
     return parser_args;
@@ -102,5 +108,6 @@ void free_datagram(statsd_datagram* datagram) {
 }
 
 void* statsd_parser_consume(void* args) {
+    printf("Starting to parse. \n");
     return NULL;
 }

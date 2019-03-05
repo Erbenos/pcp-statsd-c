@@ -9,6 +9,7 @@
 #define JSON_BUFFER_SIZE 4096
 
 void basic_parser_parse(char* buffer, ssize_t count, void (*callback)(statsd_datagram*)) {
+    printf("Beggining to parse, Here i should get data from some Q \n");
     struct statsd_datagram* datagram = (struct statsd_datagram*) malloc(sizeof(struct statsd_datagram));
     // memset 0 doesnt work here for some reason
     *datagram = (struct statsd_datagram) {0};

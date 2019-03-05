@@ -1,22 +1,24 @@
 #include <pthread.h>
 
 typedef struct queue {
-    char** strings;
-    long head;
-    long tail;
+    void** items;
+    int limit;
+    long front;
+    long back;
     int full;
     int empty;
-    pthread_mutex_t *mutex;
-    pthread_cond_t not_empty;
-    pthread_cond_t not_full;
+    int member_size;
+    pthread_mutex_t* mutex;
+    pthread_cond_t* not_empty;
+    pthread_cond_t* not_full;
 } queue;
 
-queue* init_queue(queue* q);
+queue* queue_init(int limit, int member_size);
 
 void queue_free(queue* q);
 
-void queue_insert_item(queue* q, char* string);
+void queue_enqueue(queue* q, void* item);
 
-void queue_delete_item(queue* q, char* string);
+void* queue_dequeue(queue* q);
 
 
