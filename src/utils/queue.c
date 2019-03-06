@@ -51,22 +51,28 @@ void queue_free(queue* q) {
 }
 
 void queue_enqueue(queue* q, void* item) {
-    if ((q->front == q->back + 1) || (q->front == 0 && q->back == q->limit - 1)) return;
+    if ((q->front == q->back + 1) || (q->front == 0 && q->back == q->limit - 1)) {
+        q->full = 1;
+        return;
+    }
     if (q->front == -1) {
         q->front = 0;
     }
     q->back = (q->back + 1) % q->limit;
     q->items[q->back] = item;
+    q->empty = 0;
 }
 
 void* queue_dequeue(queue* q) {
     if (q->front == -1) return NULL;
     void* target = q->items[q->front];
     if (q->front == q->back) {
+        q->empty = 1;
         q->front = -1;
         q->back = -1;
     } else {
         q->front = (q->front + 1) % q->limit;
     }
+    q->full = 0;
     return target;
 }

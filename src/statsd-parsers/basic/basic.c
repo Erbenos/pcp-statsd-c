@@ -8,14 +8,13 @@
 
 #define JSON_BUFFER_SIZE 4096
 
-void basic_parser_parse(char* buffer, ssize_t count, void (*callback)(statsd_datagram*)) {
-    printf("Beggining to parse, Here i should get data from some Q \n");
+statsd_datagram* basic_parser_parse(char* buffer) {
     struct statsd_datagram* datagram = (struct statsd_datagram*) malloc(sizeof(struct statsd_datagram));
-    // memset 0 doesnt work here for some reason
     *datagram = (struct statsd_datagram) {0};
     int current_segment_length = 0;
     int i = 0;
     char previous_delimiter = ' ';
+    int count = strlen(buffer);
     char *segment = (char *) malloc(count); // cannot overflow since whole segment is count anyway
     if (segment == NULL) {
         die(__LINE__, "Unable to assign memory for StatsD datagram message parsing");
@@ -169,7 +168,6 @@ void basic_parser_parse(char* buffer, ssize_t count, void (*callback)(statsd_dat
         memcpy(datagram->tags, tags_json_buffer, json_len);
         datagram->tags[json_len] = '\0';
     }
-    callback(datagram);
-    free_datagram(datagram);
     free(segment);
+    return datagram;
 }

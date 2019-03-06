@@ -1,10 +1,11 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
 #include "config-reader/config-reader.h"
 #include "statsd-parsers/statsd-parsers.h"
-#include "histograms/histograms.h"
+#include "consumers/consumers.h"
 #include "utils/utils.h"
 #include "utils/queue.h"
 
@@ -12,6 +13,7 @@ int main(int argc, char **argv)
 {
     pthread_t network_listener;
     pthread_t datagram_parser;
+    pthread_t datagram_consumer;
 
     agent_config* config = (agent_config*) malloc(sizeof(agent_config));
     if (config == NULL) {
@@ -22,17 +24,25 @@ int main(int argc, char **argv)
     init_loggers(config);
     print_agent_config(config);
 
-    statsd_listener_args* listener_args = create_listener_args(config);
-    statsd_parser_args* parser_args = create_parser_args(config);
+    queue* unprocessed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(unprocessed_statsd_datagram*));
+    queue* parsed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(statsd_datagram*));
+
+    statsd_listener_args* listener_args = create_listener_args(config, unprocessed_datagrams_q);
+    statsd_parser_args* parser_args = create_parser_args(config, unprocessed_datagrams_q, parsed_datagrams_q);
+    consumer_args* consumer_args = create_consumer_args(config, parsed_datagrams_q);
 
     pthread_create(&network_listener, NULL, statsd_network_listen, listener_args);
     pthread_create(&datagram_parser, NULL, statsd_parser_consume, parser_args);
+    pthread_create(&datagram_consumer, NULL, consume_datagram, consumer_args);
 
     if (pthread_join(network_listener, NULL) != 0) {
         die(__LINE__, "Error joining network listener thread.");
     }
     if (pthread_join(datagram_parser, NULL) != 0) {
         die(__LINE__, "Error joining datagram parser thread.");
+    }
+    if (pthread_join(datagram_consumer, NULL) != 0) {
+        die(__LINE__, "Error joining datagram consumer thread.");
     }
     return 1;
 }
