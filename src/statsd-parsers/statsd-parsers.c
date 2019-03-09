@@ -37,10 +37,8 @@ void* statsd_network_listen(void* args) {
     if (bind(fd, res->ai_addr, res->ai_addrlen) == -1) {
         die(__LINE__, "failed binding socket (err=%s)", strerror(errno));
     }
-    if (config->verbose == 1) {
-        printf("Socket enstablished. \n");
-        printf("Waiting for datagrams. \n");
-    }
+    verbose_log("Socket enstablished.");
+    verbose_log("Waiting for datagrams.");
     freeaddrinfo(res);
     int max_udp_packet_size = config->max_udp_packet_size;
     char *buffer = (char *) malloc(max_udp_packet_size);
@@ -56,13 +54,9 @@ void* statsd_network_listen(void* args) {
             warn(__LINE__, "Datagram too large for buffer: truncated and skipped");
         } else {
             unprocessed_statsd_datagram* datagram = (unprocessed_statsd_datagram*) malloc(sizeof(unprocessed_statsd_datagram));
-            if (datagram == NULL) {
-                die(__LINE__, "Unable to assign memory for struct representing unprocessed datagram.");
-            }
+            ALLOC_CHECK("Unable to assign memory for struct representing unprocessed datagrams.");
             datagram->value = (char*) malloc(sizeof(char) * (count + 1));
-            if (datagram->value == NULL) {
-                die(__LINE__, "Unable to assign memory for datagram value.");
-            }
+            ALLOC_CHECK("Unable to assign memory for datagram value.");
             strncpy(datagram->value, buffer, count);
             datagram->value[count + 1] = '\0';
             pthread_mutex_lock(q->mutex);
@@ -82,13 +76,9 @@ void* statsd_network_listen(void* args) {
 
 statsd_listener_args* create_listener_args(agent_config* config, queue* q) {
     struct statsd_listener_args* listener_args = (struct statsd_listener_args*) malloc(sizeof(struct statsd_listener_args));
-    if (listener_args == NULL) {
-        die(__LINE__, "Unable to assign memory for listener arguments.");
-    }
+    ALLOC_CHECK("Unable to assign memory for listener arguments.");
     listener_args->config = (agent_config*) malloc(sizeof(agent_config));
-    if (listener_args->config == NULL) {
-        die(__LINE__, "Unable to assign memory for listener config.");
-    }
+    ALLOC_CHECK("Unable to assign memory for listener config.");
     listener_args->config = config;
     listener_args->unprocessed_datagrams_queue = q;
     return listener_args;
@@ -96,13 +86,9 @@ statsd_listener_args* create_listener_args(agent_config* config, queue* q) {
 
 statsd_parser_args* create_parser_args(agent_config* config, queue* unprocessed_q, queue* parsed_q) {
     struct statsd_parser_args* parser_args = (struct statsd_parser_args*) malloc(sizeof(struct statsd_parser_args));
-    if (parser_args == NULL) {
-        die(__LINE__, "Unable to assign memory for parser arguments.");
-    }
+    ALLOC_CHECK("Unable to assign memory for parser arguments.");
     parser_args->config = (agent_config*) malloc(sizeof(agent_config*));
-    if (parser_args->config == NULL) {
-        die(__LINE__, "Unable to assign memory for parser config.");
-    }
+    ALLOC_CHECK("Unable to assign memory for parser config.");
     parser_args->config = config;
     parser_args->unprocessed_datagrams_queue = unprocessed_q;
     parser_args->parsed_datagrams_queue = parsed_q;
@@ -111,13 +97,9 @@ statsd_parser_args* create_parser_args(agent_config* config, queue* unprocessed_
 
 consumer_args* create_consumer_args(agent_config* config, queue* parsed_q) {
     struct consumer_args* consumer_args = (struct consumer_args*) malloc(sizeof(struct consumer_args));
-    if (consumer_args == NULL) {
-        die(__LINE__, "Unable to assign memory for parser arguments.");
-    }
+    ALLOC_CHECK("Unable to assign memory for parser aguments.");
     consumer_args->config = (agent_config*) malloc(sizeof(agent_config*));
-    if (consumer_args->config == NULL) {
-        die(__LINE__, "Unable to assign memory for parser config.");
-    }
+    ALLOC_CHECK("Unable to assign memory for parser config.");
     consumer_args->config = config;
     consumer_args->parsed_datagrams_queue = parsed_q;
     return consumer_args;

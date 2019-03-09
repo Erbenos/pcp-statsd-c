@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-
 #include "config-reader/config-reader.h"
 #include "statsd-parsers/statsd-parsers.h"
 #include "consumers/consumers.h"
@@ -16,14 +15,11 @@ int main(int argc, char **argv)
     pthread_t datagram_consumer;
 
     agent_config* config = (agent_config*) malloc(sizeof(agent_config));
-    if (config == NULL) {
-        die(__LINE__, "Unable to assign memory for agent config.");
-    }
+    ALLOC_CHECK(NULL, "Unable to asssign memory for agent config.");
     int config_src_type = argc >= 2 ? READ_FROM_CMD : READ_FROM_FILE;
     config = read_agent_config(config_src_type, "config", argc, argv);
     init_loggers(config);
     print_agent_config(config);
-
     queue* unprocessed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(unprocessed_statsd_datagram*));
     queue* parsed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(statsd_datagram*));
 
@@ -31,9 +27,13 @@ int main(int argc, char **argv)
     statsd_parser_args* parser_args = create_parser_args(config, unprocessed_datagrams_q, parsed_datagrams_q);
     consumer_args* consumer_args = create_consumer_args(config, parsed_datagrams_q);
 
-    pthread_create(&network_listener, NULL, statsd_network_listen, listener_args);
-    pthread_create(&datagram_parser, NULL, statsd_parser_consume, parser_args);
-    pthread_create(&datagram_consumer, NULL, consume_datagram, consumer_args);
+    int pthread_errno = 0; 
+    pthread_errno = pthread_create(&network_listener, NULL, statsd_network_listen, listener_args);
+    PTHREAD_CHECK(pthread_errno);
+    pthread_errno = pthread_create(&datagram_parser, NULL, statsd_parser_consume, parser_args);
+    PTHREAD_CHECK(pthread_errno);
+    pthread_errno = pthread_create(&datagram_consumer, NULL, consume_datagram, consumer_args);
+    PTHREAD_CHECK(pthread_errno);
 
     if (pthread_join(network_listener, NULL) != 0) {
         die(__LINE__, "Error joining network listener thread.");
