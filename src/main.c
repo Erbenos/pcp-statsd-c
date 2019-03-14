@@ -2,11 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <chan.h>
+
 #include "config-reader/config-reader.h"
 #include "statsd-parsers/statsd-parsers.h"
 #include "consumers/consumers.h"
 #include "utils/utils.h"
-#include "utils/queue.h"
+
+
 
 int main(int argc, char **argv)
 {
@@ -20,8 +23,9 @@ int main(int argc, char **argv)
     config = read_agent_config(config_src_type, "config", argc, argv);
     init_loggers(config);
     print_agent_config(config);
-    queue* unprocessed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(unprocessed_statsd_datagram*));
-    queue* parsed_datagrams_q = queue_init(config->max_unprocessed_packets, sizeof(statsd_datagram*));
+
+    chan_t* unprocessed_datagrams_q = chan_init(config->max_unprocessed_packets);
+    chan_t* parsed_datagrams_q = chan_init(config->max_unprocessed_packets);
 
     statsd_listener_args* listener_args = create_listener_args(config, unprocessed_datagrams_q);
     statsd_parser_args* parser_args = create_parser_args(config, unprocessed_datagrams_q, parsed_datagrams_q);

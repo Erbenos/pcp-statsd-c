@@ -8,10 +8,10 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_LIBS_DIRS = -I./vendor/github.com/HdrHistogram/HdrHistogram_c
+INC_LIBS_DIRS = -I./vendor/github.com/HdrHistogram/HdrHistogram_c -I./vendor/github.com/tylertreat/chan
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-LDFLAGS := -L./vendor/github.com/HdrHistogram/HdrHistogram_c
-LDLIBS := -lhdr_histogram_static -lm -lpthread
+LDFLAGS := -L./vendor/github.com/HdrHistogram/HdrHistogram_c -L./vendor/github.com/tylertreat/chan
+LDLIBS := -lhdr_histogram_static -lchan -lm -lpthread
 
 CFLAGS ?=-Wall -Wextra $(INC_LIBS_DIRS) $(INC_FLAGS) -MMD -MP -g
 
