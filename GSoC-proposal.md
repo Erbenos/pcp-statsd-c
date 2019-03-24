@@ -15,8 +15,6 @@ I also hangout on "The Programmer's hangout" Discord channel. Nick is @Erbenos#1
 - Name - Kateřina Biolková
 - Phone - +420 739 981 205
 - Email - biolkova.katerina@gmail.com
-
-
 - Name - Jana Foltýnová
 - Phone - +420 777 106 131
 - Email - foltynova@linaset.cz
