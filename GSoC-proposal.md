@@ -11,7 +11,7 @@
     
 I also hangout on "The Programmer's hangout" Discord channel. Nick is @Erbenos#1658.
 
-### Contact information in case of an emergency
+### Contact Information in Case of an Emergency
 - Name - Kateřina Biolková
 - Phone - +420 739 981 205
 - Email - biolkova.katerina@gmail.com
