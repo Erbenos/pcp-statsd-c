@@ -40,7 +40,7 @@ In collaboration with Computer Center of Palacky University I implemented redesi
 [Check it out](https://helpdesk.upol.cz/)
 
 ## Abstract
-*StatsD* is simple, text-based UDP protocop for receiving monitoring data of applications in architecture client-server. As of right now, there is no StatsD implementation for PCP available, other then this [hack](https://github.com/lzap/pcp-mmvstatsd).
+*StatsD* is simple, text-based UDP protocop for receiving monitoring data of applications in architecture client-server. As of right now, there is no StatsD implementation for PCP available, other then [this](https://github.com/lzap/pcp-mmvstatsd) which is not suitable for production environment.
 
 Goal of this project is to write PMDA agent for PCP in C, that would receive StatsD UDP packets and then aggregate and transfer handled data to PCP. There would be 3 basic types of metrics: counter, duration and gauge. Agent is to be build with modular architecture in mind with an option of changing implementation of both aggregator and parsers, which will allow to accurately describe differences between approaches to aggregation and text protocol parsing. Since the PMDA API is based on around callbacks the design has to be multithreaded.
 
@@ -60,7 +60,7 @@ Agent is to be fully configurable with either PCP configuration options and/or s
 - To write end-to-end/integration tests.
 
 ### June 29 - July 26
-- To connect what's done with PCP, do a <program> -> <PCP>
+- To connect what's done with PCP
 - To write end-to-end/integration tests
 
 ### July 27 - August 19
