@@ -19,7 +19,7 @@ I also hangout on "The Programmer's hangout" Discord channel. Nick is @Erbenos#1
 - Phone - +420 777 106 131
 - Email - foltynova@linaset.cz
 
-# PCP PMDA agent for StatsD in C
+# PCP PMDA Agent for StatsD in C
 
 ## Bibligraphy and Past Experience
 I am Master's Computer Science student at Palacky University in Olomouc.
