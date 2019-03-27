@@ -21,7 +21,7 @@ I also hangout on "The Programmer's hangout" Discord channel. Nick is @Erbenos#1
 
 # PCP PMDA agent for StatsD in C
 
-## Bibligraphy and Past experience
+## Bibligraphy and Past Experience
 I am Master's Computer Science student at Palacky University in Olomouc.
 
 I have been working as a freelance web developer for 3 years, while studying simultaneously. Last 6 months or so I am part-time working at Computer Center of Palacky University, where me and my colleagues build upon and improve existing university's internal applications for employees and students alike. I mostly do front-end stuff now, altrought I am able to do back-end if need be (in either C# or PHP, I have some NodeJS experience, but only for client side app's - with stuff like Electron - not with actually coding server-side logic).
