@@ -1,4 +1,4 @@
-## Contact information
+## Contact Information
 - Name - Miroslav Foltýn
 - Phone - +420 732 204 141
 - Email - email@miroslavfoltyn.com
