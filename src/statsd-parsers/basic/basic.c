@@ -125,7 +125,7 @@ statsd_datagram* basic_parser_parse(char* buffer) {
                     memcpy(datagram->sampling, attr, current_segment_length + 1);
                 } else {
                     datagram->type = (char *) malloc(current_segment_length + 1);
-                    ALLOC_CHECK("Not enough emmory to save type attribute.");
+                    ALLOC_CHECK("Not enough memory to save type attribute.");
                     memcpy(datagram->type, attr, current_segment_length + 1);
                 }
             }
