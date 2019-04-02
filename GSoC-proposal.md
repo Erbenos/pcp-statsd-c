@@ -46,25 +46,26 @@ In collaboration with Computer Center of Palacky University I implemented redesi
 [Check it out](https://helpdesk.upol.cz/)
 
 ## Abstract
-**StatsD** is simple, text-based UDP protocol for receiving monitoring data of applications in architecture client-server. As of right now, there is no StatsD implementation for PCP available, other then [this](https://github.com/lzap/pcp-mmvstatsd) which is not suitable for production environment.
+**StatsD** is simple, text-based UDP protocol for receiving monitoring data of applications in architecture client-server. As of right now, there is no StatsD implementation for PCP available, other than [pcp-mmvstatsd](https://github.com/lzap/pcp-mmvstatsd) which is not suitable for production environment as it:
 
-Goal of this project is to write PMDA agent for PCP in C, that would receive StatsD UDP packets and then aggregate and transfer handled data to PCP. There would be 3 basic types of metrics: counter, duration and gauge. Agent is to be build with modular architecture in mind with an option of changing implementation of both aggregator and parsers, which will allow to accurately describe differences between approaches to aggregation and text protocol parsing. Since the PMDA API is based on around callbacks the design has to be multithreaded.
+- does not map labels properly and creates hundreds of metrics
+- doesn't use PMAPI, instead it maps memory using MMV, which was meant for instrumenting not agents
 
-Agent is to be fully configurable with either separate configuration file and/or command line arguments. Writing integration tests is also in the scope of the project.
+Goal of this project is to write PMDA agent for PCP in C, that would receive StatsD UDP packets and then aggregate and transfer handled data to PCP. There would be 3 basic types of metrics: counter, duration and gauge. Agent is to be build with modular architecture in mind with an option of changing implementation of both aggregator and parsers, which will allow to accurately describe differences between approaches to aggregation and text protocol parsing. Since the PMDA API is based on around callbacks the design is supposed to be multithreaded.
 
 ## Technicalities
 
 ### PMDA architecture
 PMDA will be written using **pmthreads**:
 
-- main process
-    - gets configuration options (either from file, or command-line)
-    - initialized channels inter-thread communication entities
-    - starts threads
-- single thread collecting data from UDP/TCP
-- single thread parsing received data
-- single thread processing parsed datagrams
-- single thread communicating with PCP PMDA library, since libpcp_pmda is not thread-safe
+- Main process
+    - Gets configuration options (either from file, or command-line)
+    - Inicializes channels inter-thread communication entities
+    - Starts threads
+- Single thread collecting data from UDP/TCP
+- Single thread parsing received data
+- Single thread processing parsed datagrams
+- Single thread communicating with PCP PMDA library, since libpcp_pmda is not thread-safe
 
 Inter-thread communication will be taken care of using Go (Go-Lang) like channels library **chan** ([github repo](https://github.com/tylertreat/chan), Apache license).
 
@@ -81,7 +82,7 @@ Data will come from either TCP or UDP connection in form of StatsD datagrams, wh
 
 Configuration will also include an option for specifying which parser to use, port on which to listen, max packet size and how many unprocessed datagrams there may be.
 
-In case of **duration** metric values will be further processed via high dynamic range histogram using **HdrHistogram_c** ([github repo](https://github.com/HdrHistogram/HdrHistogram_c), BSD 2 License). 
+In case of **duration** metric values will be further processed via high dynamic range histogram using **HdrHistogram_c** ([github repo](https://github.com/HdrHistogram/HdrHistogram_c), BSD 2 License) or basic aggregation.
 
 #### Ragel parser
 **Ragel** ([website](http://www.colm.net/open-source/ragel/), [github repo](https://github.com/bnoordhuis/ragel)) is an Open Source MIT licensed (in case of Ragel 6, GPL v2) State Machine Compiler, as such it is great for parsing data formats.
@@ -118,17 +119,33 @@ Standard GDB should proof sufficient for generic C code, with Valgrind specifica
 
 Most PCP tools support *-D* flag for activating debugging options. PCP also ships with **dbpmda** - domain specific debugging utility for PMDAs.
 
+<figure>
+    <img src="https://gsoc.miroslavfoltyn.com/graph.png" alt="Graph of Application">
+    <figcaption style="text-align: center">
+        <small>Application Architecture Graph</small>
+    </figcaption>
+</figure>
+
 ## Third party libraries
 Libraries that are currently planned for usage in this project (excluding PCP related ones) are:
 - *chan* ([github repo](https://github.com/tylertreat/chan), Apache license)
 - *Ragel* ([website](http://www.colm.net/open-source/ragel/), [github repo](https://github.com/bnoordhuis/ragel), MIT or GPLv2 license, differs by version)
 - *HdrHistogram_c* ([github repo](https://github.com/HdrHistogram/HdrHistogram_c), Apache license)
 
-## Configuration options
+## Deliverables
+- PMDA agent C code licensed under GNU GPL
+- Code of basic and Ragel parser modules
+- Code of basic and HDR histogram aggregator modules
+- Example configration
+- Integration tests
+- Documentation in a form of READ describing compilation and basic configuration
+
+### Configuration options
 - Maximum packet size
 - Maximum of unprocessed packets
 - Port and address to listen to for StatsD datagrams
 - Parser type
+- Aggregation type
 - Tracing and debugging flags
 
 ## Proposal Timeline
@@ -140,7 +157,8 @@ Libraries that are currently planned for usage in this project (excluding PCP re
 - To show what is already done (as the project is also my Master's thesis that I started to work on since January 2019) 
 
 ### May 27 - June 28
-- To incorporate HDR histogram for data aggregation
+- To incorporate basic aggregation
+- To incorporate aggregation using HDR histogram
 - To incorporate Ragel parser
 - To write end-to-end/integration tests.
 
