@@ -67,7 +67,7 @@ PMDA will be written using **pthreads**:
 - Single thread processing parsed datagrams
 - Single thread communicating with PCP PMDA library, since libpcp_pmda is not thread-safe
 
-Inter-thread communication will be taken care of using Go (Go-Lang) like channels library **chan** ([github repo](https://github.com/tylertreat/chan), Apache license).
+Inter-thread communication will be taken care of using _Go_ (_Go-Lang_) like channels library **chan** ([github repo](https://github.com/tylertreat/chan), Apache license).
 
 ### Extracting metrics from the target domain
 There will be 3 supported metrics:
