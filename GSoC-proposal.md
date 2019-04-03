@@ -56,7 +56,7 @@ Goal of this project is to write PMDA agent for PCP in C, that would receive Sta
 ## Technicalities
 
 ### PMDA architecture
-PMDA will be written using **pmthreads**:
+PMDA will be written using **pthreads**:
 
 - Main process
     - Gets configuration options (either from file, or command-line)
