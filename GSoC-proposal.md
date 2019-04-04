@@ -175,7 +175,7 @@ At this point the PMDA should fully integrate with PCP.
 - To write documentation
 - Bounce period for any delays
 
-At this point documentation should be written, agent performace optimized and all programming finished so that the product is fully usable.
+At this point documentation should be written, agent performance optimized and all programming finished so that the product is fully usable.
 
 ## Feedback
 Please send feedback to my email address.
