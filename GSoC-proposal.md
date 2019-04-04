@@ -36,7 +36,7 @@ I have little low-level programming experience, only did some microcontroller pr
 If my proposal get's accepted, I will fully commit myself to GSoC the moment coding begins.
 
 ### Website for Blue Partners s.r.o.
-I successfully completed both front-end and back-end of given website design in collaboration with marketer (Lukáš Hladeček), copywriter (Karel Melecký), designer (Michal Maleňák) and SEO analyst (Šárka Jakubcová). The project was completed in tight deadline, as the marketting campaign was already setup and delays would be costly. Site was further improved months down the line with more functionality as requested by the client. Most important part was interactive test that aimed at inspecting company owners perception of their company's technical security and presenting gathered data in clear and informative way.
+I successfully completed both front-end and back-end of given website design in collaboration with marketer (Lukáš Hladeček), copywriter (Karel Melecký), designer (Michal Maleňák) and SEO analyst (Šárka Jakubcová). The project was completed in tight deadline, as the marketing campaign was already setup and delays would be costly. Site was further improved months down the line with more functionality as requested by the client. Most important part was interactive test that aimed at inspecting company owners perception of their company's technical security and presenting gathered data in clear and informative way.
 
 [Check it out](https://www.bluepartners.cz/en/)
 
@@ -97,7 +97,7 @@ Data may also contain any number of tags (separated by commas), which can be use
 ```
 <metricname>,<tagname>=<tagvalue>:<value>|<type>
 ```
-Instance will be identified by the tag of the same name eg.:
+Instance will be identified by the tag of the same name e.g.:
 ```
 <metricname>,<instance>=<identifier>:<value>|<type>
 ```
