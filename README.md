@@ -3,6 +3,11 @@
 # pcp-statsd-c
 PCP PMDA for StatsD in C
 
+first build dependencies with: 
+```
+make dependencies
+```
+
 compile with:
 
 ```
