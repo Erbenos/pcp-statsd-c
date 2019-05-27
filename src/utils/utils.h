@@ -4,6 +4,7 @@
 
 #include "../config-reader/config-reader.h"
 
+
 #ifndef UTILS_
 #define UTILS_
 
@@ -11,6 +12,13 @@
     if (errno == ENOMEM) { \
         die(__LINE__, desc, ## __VA_ARGS__); \
     } \
+
+#define LAMBDA(l_ret_type, l_arguments, l_body)        \
+  ({                                                   \
+   l_ret_type l_anonymous_functions_name l_arguments   \
+   l_body                                              \
+   &l_anonymous_functions_name;                        \
+   })
 
 // M/C/R-alloc can still return NULL when the address space is full.
 #define PTHREAD_CHECK(ret) \
@@ -30,7 +38,7 @@ void die(int line_number, const char* format, ...);
 
 void warn(int line_number, const char* format, ...);
 
-void sanitize_string(char *src);
+void sanitize_string(char* src);
 
 void init_loggers(agent_config* config);
 

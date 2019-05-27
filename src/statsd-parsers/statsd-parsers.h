@@ -8,16 +8,26 @@
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;
 
+typedef struct tag {
+    char* key;
+    char* value;
+} tag;
+
+typedef struct tag_collection {
+    tag** values;
+    long int length;
+} tag_collection;
+
 typedef struct statsd_datagram
 {
-    char *data_namespace;
-    char *type;
-    char *modifier;
-    char *tags;
+    char* data_namespace;
+    char* type;
+    char* modifier;
+    tag_collection* tags;
     double value;
-    char *metric;
-    char *instance;
-    char *sampling;
+    char* metric;
+    char* instance;
+    char* sampling;
 } statsd_datagram;
 
 typedef struct unprocessed_statsd_datagram
@@ -54,8 +64,12 @@ consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel
 
 void* statsd_parser_consume(void* args);
 
+void print_out_datagram_tags(tag_collection* tags);
+
 void print_out_datagram(statsd_datagram* datagram);
 
 void free_datagram(statsd_datagram* datagram);
+
+void free_datagram_tags(tag_collection* tags);
 
 #endif
