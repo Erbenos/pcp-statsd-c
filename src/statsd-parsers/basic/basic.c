@@ -8,6 +8,7 @@
 
 #define JSON_BUFFER_SIZE 4096
 
+// TODO: this tag formatting is completely needless, build tag_collection from start
 statsd_datagram* basic_parser_parse(char* buffer) {
     struct statsd_datagram* datagram = (struct statsd_datagram*) malloc(sizeof(struct statsd_datagram));
     *datagram = (struct statsd_datagram) {0};
@@ -51,7 +52,7 @@ statsd_datagram* basic_parser_parse(char* buffer) {
                 memcpy(datagram->metric, attr, current_segment_length + 1);
             } else if ((buffer[i] == ',' || buffer[i] == ':') && previous_delimiter == '=') {
                 json_value = (char *) realloc(json_value, current_segment_length + 1);
-                ALLOC_CHECK("Not enough memory fot tag value buffer.");
+                ALLOC_CHECK("Not enough memory for tag value buffer.");
                 memcpy(json_value, attr, current_segment_length + 1);
                 if (strcmp(json_key, INSTANCE_TAG_IDENTIFIER) == 0) {
                     datagram->instance = (char *) malloc(current_segment_length + 1);
@@ -137,12 +138,17 @@ statsd_datagram* basic_parser_parse(char* buffer) {
         current_segment_length++;
     }
     if (any_tags == 1) {
+        /*
         int json_len = strlen(tags_json_buffer);
         tags_json_buffer[json_len - 1] = '}';
-        datagram->tags = (char *) malloc(json_len + 1);
+
+        datagram->tags = (struct tag_collection*) malloc(sizeof(tag_collection));
         ALLOC_CHECK("Not enough memory to save tags JSON.");
+        parse_datagram_tags(tags_json_buffer, datagram->tags);
+        datagram->tags = (char *) malloc(json_len + 1);
         memcpy(datagram->tags, tags_json_buffer, json_len);
         datagram->tags[json_len] = '\0';
+        */
     }
     free(segment);
     return datagram;

@@ -21,7 +21,7 @@ $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 # c source
 $(BUILD_DIR)/%.c.o: %.c
 	$(MKDIR_P) $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@ 
+	$(CC) $(CFLAGS) -g -c $< -o $@ 
 
 .PHONY: clean
 
