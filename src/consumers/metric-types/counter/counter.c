@@ -1,9 +1,10 @@
+#include <errno.h>
 #include <string.h>
 #include "../../../config-reader/config-reader.h"
 #include "../../../statsd-parsers/statsd-parsers.h"
 #include "../../../utils/utils.h"
 #include "../../consumers.h"
-#include "counter.h"
+#include "./counter.h"
 
 static counter_metric_collection g_counters = { 0 };
 
