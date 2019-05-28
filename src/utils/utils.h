@@ -40,6 +40,8 @@ void warn(int line_number, const char* format, ...);
 
 void sanitize_string(char* src);
 
+void sanitize_metric_val_string(char* src);
+
 void init_loggers(agent_config* config);
 
 void verbose_log(const char* format, ...);
