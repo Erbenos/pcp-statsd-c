@@ -59,6 +59,29 @@ void sanitize_string(char *src) {
     }
 }
 
+void sanitize_metric_val_string(char* src) {
+    int segment_length = strlen(src);
+    int i;
+    for (i = 0; i < segment_length; i++) {
+        char current_char = src[i];
+        if (i == 0) {
+            if (((int) current_char >= (int) '0' && (int) current_char <= (int) '9') ||
+                (current_char == '+') ||
+                (current_char == '-')) {
+                continue;
+            } else {
+                die(__LINE__, "Unable to sanitize string.");
+            }
+        } else {
+            if ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') {
+                continue;
+            } else {
+                die(__LINE__, "Unable to sanitize string.");
+            }
+        }
+    }
+}
+
 void verbose_log(const char* format, ...) {
     if (verbose_flag) {
         va_list vargs;

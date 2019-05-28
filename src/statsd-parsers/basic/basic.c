@@ -27,8 +27,7 @@ statsd_datagram* basic_parser_parse(char* buffer) {
     int json_buffer_index = 0;
     for (i = 0; i < count; i++) {
         segment[current_segment_length] = buffer[i];
-        if (buffer[i] == '.' ||
-            buffer[i] == ':' ||
+        if (buffer[i] == ':' ||
             buffer[i] == ',' ||
             buffer[i] == '=' ||
             buffer[i] == '|' ||
@@ -39,13 +38,7 @@ statsd_datagram* basic_parser_parse(char* buffer) {
             strncpy(attr, segment, current_segment_length);
             attr[current_segment_length] = '\0';
             ALLOC_CHECK("Not enough memory to parse StatsD datagram segment.");
-            if (buffer[i] == '.') {
-                datagram->data_namespace = (char *) malloc(current_segment_length + 1);
-                ALLOC_CHECK("Not enough memory to save data_namespace attribute.");
-                sanitize_string(attr);
-                memcpy(datagram->data_namespace, attr, current_segment_length + 1);
-                previous_delimiter = '.';
-            } else if (buffer[i] == ':' && (previous_delimiter == ' ' || previous_delimiter == '.')) {
+            if (buffer[i] == ':' && previous_delimiter == ' ') {
                 datagram->metric = (char *) malloc(current_segment_length + 1);
                 ALLOC_CHECK("Not enough memory to save metric attribute.");
                 sanitize_string(attr);
@@ -105,14 +98,10 @@ statsd_datagram* basic_parser_parse(char* buffer) {
                 memcpy(datagram->metric, attr, current_segment_length + 1);
                 previous_delimiter = ',';
             } else if (buffer[i] == '|') {
-                double result;
-                if (sscanf(attr, "%lf", &result) != 1) {
-                    // not a double
-                    die(__LINE__, "Unable to parse metric double value");
-                } else {
-                    // a double
-                    datagram->value = result;
-                }
+                datagram->value = (char *) malloc(current_segment_length + 1);
+                ALLOC_CHECK("Not enough memory to save value attribute.");
+                sanitize_metric_val_string(attr);
+                memcpy(datagram->value, attr, current_segment_length + 1);
                 previous_delimiter = '|';
             } else if (buffer[i] == '@') {
                 datagram->type = (char *) malloc(current_segment_length + 1);

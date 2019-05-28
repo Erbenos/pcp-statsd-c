@@ -20,12 +20,11 @@ typedef struct tag_collection {
 
 typedef struct statsd_datagram
 {
-    char* data_namespace;
+    char* metric;
     char* type;
     char* modifier;
     tag_collection* tags;
-    double value;
-    char* metric;
+    char* value;
     char* instance;
     char* sampling;
 } statsd_datagram;

@@ -101,13 +101,12 @@ consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel
 
 void print_out_datagram(statsd_datagram* datagram) {
     printf("DATAGRAM: \n");
-    printf("data_namespace: %s \n", datagram->data_namespace);
     printf("metric: %s \n", datagram->metric);
     printf("instance: %s \n", datagram->instance);
     if (datagram->tags != NULL) {
         print_out_datagram_tags(datagram->tags);
     }
-    printf("value: %f \n", datagram->value);
+    printf("value: %s \n", datagram->value);
     printf("type: %s \n", datagram->type);
     printf("sampling: %s \n", datagram->sampling);
     printf("------------------------------ \n");
@@ -121,7 +120,6 @@ void print_out_datagram_tags(tag_collection* collection) {
 }
 
 void free_datagram(statsd_datagram* datagram) {
-    free(datagram->data_namespace);
     free(datagram->metric);
     free(datagram->instance);
     free_datagram_tags(datagram->tags);
