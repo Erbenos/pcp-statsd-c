@@ -187,11 +187,15 @@ int parse(char* buffer, statsd_datagram** datagram) {
     }
     free(segment);
     if (required_fields_flags & field_allocated_flags != required_fields_flags)  {
-        goto error_clean_up;
+        goto error_clean_up_end;
     }
     return 1;
 
     error_clean_up:
+    free(attr);
+    free(segment);
+
+    error_clean_up_end:
     if (field_allocated_flags & 1) {
         free_datagram_tags((*datagram)->tags);
     }
@@ -216,7 +220,5 @@ int parse(char* buffer, statsd_datagram** datagram) {
     if (tag_allocated_flags & 2) {
         free(tag_value);
     }
-    free(attr);
-    free(segment);
     return 0;
 }
