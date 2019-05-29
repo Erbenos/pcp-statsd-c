@@ -14,7 +14,9 @@ typedef struct counter_metric_collection {
     long int length;
 } counter_metric_collection;
 
-void process_counter(statsd_datagram* datagram, agent_config* config);
+void init_counter_consumer(agent_config* config);
+
+void process_counter(statsd_datagram* datagram);
 
 int find_counter_by_name(char* name, counter_metric** out);
 

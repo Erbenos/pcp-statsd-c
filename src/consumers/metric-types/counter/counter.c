@@ -8,15 +8,26 @@
 
 static counter_metric_collection g_counters = { 0 };
 
-void process_counter(statsd_datagram* datagram, agent_config* config) {
+// TODO: do any initialization local to duration consumer, should that be needed
+void init_counter_consumer(agent_config* config) {
+
+}
+
+void process_counter(statsd_datagram* datagram) {
     counter_metric* counter = (struct counter_metric*) malloc(sizeof(counter_metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder counter record");
     *counter = (struct counter_metric) { 0 };
     if (find_counter_by_name(datagram->metric, &counter)) {
-        update_counter_record(counter, datagram);
+        if (!update_counter_record(counter, datagram)) {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
+        }
     } else {
         if (create_counter_record(datagram, &counter)) {
           add_counter_record(counter);
+        } else {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
         }
     }
 }
@@ -34,6 +45,9 @@ int find_counter_by_name(char* name, counter_metric** out) {
 
 int create_counter_record(statsd_datagram* datagram, counter_metric** out) {
     if (datagram->metric == NULL) {
+        return 0;
+    }
+    if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
     }
     long long unsigned int value = strtoull(datagram->value, NULL, 10);

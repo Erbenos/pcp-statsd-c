@@ -14,7 +14,9 @@ typedef struct gauge_metric_collection {
     long int length;
 } gauge_metric_collection;
 
-void process_gauge(statsd_datagram* datagram, agent_config* config);
+void init_gauge_consumer(agent_config* config);
+
+void process_gauge(statsd_datagram* datagram);
 
 int find_gauge_by_name(char* name, gauge_metric** out);
 

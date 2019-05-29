@@ -2,6 +2,7 @@
 #include "../../../statsd-parsers/statsd-parsers.h"
 #include "../../shared/shared.h"
 #include "../../consumers.h"
+#include <hdr/hdr_histogram.h>
 
 typedef struct duration_metric {
     char* name;
@@ -14,7 +15,9 @@ typedef struct duration_metric_collection {
     long int length;
 } duration_metric_collection;
 
-void process_duration(statsd_datagram* datagram, agent_config* config);
+void init_duration_consumer(agent_config* config);
+
+void process_duration(statsd_datagram* datagram);
 
 int find_histogram_by_name(char* name, duration_metric** out);
 
