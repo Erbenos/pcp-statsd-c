@@ -38,9 +38,13 @@ void die(int line_number, const char* format, ...);
 
 void warn(int line_number, const char* format, ...);
 
-void sanitize_string(char* src);
+int sanitize_string(char* src);
 
-void sanitize_metric_val_string(char* src);
+int sanitize_metric_val_string(char* src);
+
+int sanitize_sampling_val_string(char* src);
+
+int sanitize_type_val_string(char* src);
 
 void init_loggers(agent_config* config);
 

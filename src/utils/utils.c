@@ -14,6 +14,10 @@
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
 
+#define DURATION_METRIC "ms"
+#define COUNTER_METRIC "c"
+#define GAUGE_METRIC "g"
+
 static int verbose_flag = 0;
 static int trace_flag = 0;
 static int debug_flag = 0;
@@ -38,8 +42,11 @@ void warn(int line_number, const char* format, ...) {
     va_end(vargs);
 }
 
-void sanitize_string(char *src) {
+int sanitize_string(char *src) {
     int segment_length = strlen(src);
+    if (segment_length == 0) {
+        return 0;
+    }
     int i;
     for (i = 0; i < segment_length; i++) {
         char current_char = src[i];
@@ -54,13 +61,17 @@ void sanitize_string(char *src) {
                  (int) current_char == (int) ' ') {
             src[i] = '_';
         } else {
-            die(__LINE__, "Unable to sanitize string.");
+            return 0;
         }
     }
+    return 1;
 }
 
-void sanitize_metric_val_string(char* src) {
+int sanitize_metric_val_string(char* src) {
     int segment_length = strlen(src);
+    if (segment_length == 0) {
+        return 0;
+    }
     int i;
     for (i = 0; i < segment_length; i++) {
         char current_char = src[i];
@@ -70,16 +81,39 @@ void sanitize_metric_val_string(char* src) {
                 (current_char == '-')) {
                 continue;
             } else {
-                die(__LINE__, "Unable to sanitize string.");
+                return 0;
             }
         } else {
             if ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') {
                 continue;
             } else {
-                die(__LINE__, "Unable to sanitize string.");
+                return 0;
             }
         }
     }
+    return 1;
+}
+
+int sanitize_sampling_val_string(char* src) {
+    int segment_length = strlen(src);
+    if (segment_length == 0) {
+        return 0;
+    }
+    char* end;
+    strtod(src, &end);
+    if (src == end || *end != '\0') {
+        return 0;
+    }
+    return 1;
+}
+
+int sanitize_type_val_string(char* src) {
+    if (strcmp(src, GAUGE_METRIC) == 0 ||
+        strcmp(src, COUNTER_METRIC) == 0 ||
+        strcmp(src, DURATION_METRIC) == 0) {
+            return 1;
+        }
+    return 0;
 }
 
 void verbose_log(const char* format, ...) {

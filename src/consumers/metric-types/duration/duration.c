@@ -3,12 +3,32 @@
 #include "../../../utils/utils.h"
 #include "../../consumers.h"
 #include "./duration.h"
+#include <hdr/hdr_histogram.h>
     
 static duration_metric_collection g_durations = { 0 };    
 
-// TODO: empty implementation
-void process_duration(statsd_datagram* datagram, agent_config* config) {
+// TODO: do any initialization local to duration consumer, should that be needed
+void init_duration_consumer(agent_config* config) {
 
+}
+
+void process_duration(statsd_datagram* datagram) {
+    duration_metric* duration = (struct duration_metric*) malloc(sizeof(duration_metric));
+    ALLOC_CHECK("Unable to allocate memory for placeholder duration metric");
+    *duration = (struct duration_metric) { 0 };
+    if (find_histogram_by_name(datagram->metric, &duration)) {
+        if (!update_duration_record(duration, datagram)) {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
+        }
+    } else {
+        if (create_duration_record(datagram, &duration)) {
+            add_duration_record(duration);
+        } else {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
+        }
+    }
 }
 
 int find_histogram_by_name(char* name, duration_metric** out) {
@@ -22,8 +42,18 @@ int find_histogram_by_name(char* name, duration_metric** out) {
     return 0;
 }
 
-// TODO: empty implementation
 int create_duration_record(statsd_datagram* datagram, duration_metric** out) {
+    (*out)->name = datagram->metric;
+    struct hdr_histogram* histogram;
+    hdr_init(0, INT64_C(3600000000), 3, &histogram);
+    ALLOC_CHECK("Unable to allocate memory for histogram");
+    long long unsigned int value = strtoull(datagram->value, NULL, 10);
+    if (errno == ERANGE) {
+        return 0;
+    }
+    hdr_record_value(histogram, value);
+    (*out)->histogram = histogram;
+    (*out)->meta = create_record_meta(datagram);
     return 0;
 }
 
@@ -35,9 +65,13 @@ duration_metric_collection* add_duration_record(duration_metric* duration) {
     return &g_durations;
 }
 
-// TODO: empty implementation
 int update_duration_record(duration_metric* duration, statsd_datagram* datagram) {
-    return 0;
+    long long unsigned int value = strtoull(datagram->value, NULL, 10);
+    if (errno == ERANGE) {
+        return 0;
+    }
+    hdr_record_value(duration->histogram, value);
+    return 1;
 }
 
 duration_metric_collection* get_durations() {

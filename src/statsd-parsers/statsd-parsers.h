@@ -22,7 +22,6 @@ typedef struct statsd_datagram
 {
     char* metric;
     char* type;
-    char* modifier;
     tag_collection* tags;
     char* value;
     char* instance;

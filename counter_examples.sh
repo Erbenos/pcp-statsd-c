@@ -1,0 +1,85 @@
+#!/bin/bash
+
+call_endpoint() {
+    nc -w 1 -u 0.0.0.0 8125
+}
+
+############################
+# Simple correct case
+
+echo "login:1|c"    | call_endpoint
+echo "login:3|c"    | call_endpoint
+echo "login:5|c"    | call_endpoint
+echo "logout:4|c"   | call_endpoint
+echo "logout:2|c"   | call_endpoint
+echo "logout:2|c"   | call_endpoint
+
+## Results:
+## login = 8
+## logout = 8
+############################
+
+
+############################
+# Incorrect case - missing count
+
+echo "session_started:|c"   | call_endpoint
+echo "cache_cleared:|c"     | call_endpoint
+
+## Results:
+## Should be thrown away
+############################
+
+
+############################
+# Incorrect case - value includes incorrect character
+
+echo "session_started:1wq|c"    | call_endpoint
+echo "cache_cleared:4ěš|c"      | call_endpoint
+echo "session_started:1_4w|c"   | call_endpoint
+
+## Results:
+## Should be thrown away
+############################
+
+
+############################
+# Incorrect case - value is negative
+
+echo "session_started:-1|c" | call_endpoint
+echo "cache_cleared:-4|c"   | call_endpoint
+echo "cache_cleared:-1|c"   | call_endpoint
+
+## Results:
+## This will successfuly get parsed but will be thrown away at later time when trying to update / create metric value in consumer
+############################
+
+
+############################
+# Incorrect case - incorrect type specifier
+
+echo "session_started:1|cx"     | call_endpoint
+echo "cache_cleared:4|cw"       | call_endpoint
+echo "cache_cleared:1|rc"       | call_endpoint
+
+## Results:
+## Should be thrown away
+############################
+
+############################
+# Incorrect case - value is missing
+
+echo "session_started:|c"     | call_endpoint
+
+## Results:
+## Should be thrown away
+############################
+
+############################
+# Incorrect case - metric is missing
+
+echo ":20|c"     | call_endpoint
+
+## Results:
+## Should be thrown away
+############################

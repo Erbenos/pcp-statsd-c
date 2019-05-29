@@ -13,16 +13,19 @@
 void* consume_datagram(void* args) {
     chan_t* parsed = ((consumer_args*)args)->parsed_datagrams;
     agent_config* config = ((consumer_args*)args)->config;
+    init_duration_consumer(config);
+    init_counter_consumer(config);
+    init_gauge_consumer(config);
     statsd_datagram* datagram = (statsd_datagram*) malloc(sizeof(statsd_datagram));
     while(1) {
         *datagram = (statsd_datagram) { 0 };
         chan_recv(parsed, (void *)&datagram);
         if (strcmp(datagram->type, "ms") == 0) {
-            process_duration(datagram, config);
+            process_duration(datagram);
         } else if (strcmp(datagram->type, "c") == 0) {
-            process_counter(datagram, config);
+            process_counter(datagram);
         } else if (strcmp(datagram->type, "g") == 0) {
-            process_gauge(datagram, config);
+            process_gauge(datagram);
         }
     }
 }

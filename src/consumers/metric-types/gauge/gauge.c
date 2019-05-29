@@ -8,15 +8,26 @@
 
 static gauge_metric_collection g_gauges = { 0 };
 
-void process_gauge(statsd_datagram* datagram, agent_config* config) {
+// TODO: do any initialization local to duration consumer, should that be needed
+void init_gauge_consumer(agent_config* config) {
+
+}
+
+void process_gauge(statsd_datagram* datagram) {
     gauge_metric* gauge = (struct gauge_metric*) malloc(sizeof(gauge_metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder gauge record");
     *gauge = (struct gauge_metric) { 0 };
     if (find_gauge_by_name(datagram->metric, &gauge)) {
-        update_gauge_record(gauge, datagram);
+        if (!update_gauge_record(gauge, datagram)) {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
+        }
     } else {
         if (create_gauge_record(datagram, &gauge)) {
             add_gauge_record(gauge);
+        } else {
+            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            free_datagram(datagram);
         }
     }
 }

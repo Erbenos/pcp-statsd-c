@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     agent_config* config = (agent_config*) malloc(sizeof(agent_config));
     ALLOC_CHECK(NULL, "Unable to asssign memory for agent config.");
     int config_src_type = argc >= 2 ? READ_FROM_CMD : READ_FROM_FILE;
-    config = read_agent_config(config_src_type, "config", argc, argv);
+    config = read_agent_config(config_src_type, "pcp-statsd-pmda.conf", argc, argv);
     init_loggers(config);
     print_agent_config(config);
 
