@@ -18,6 +18,8 @@ void init_gauge_consumer(agent_config* config);
 
 void process_gauge(statsd_datagram* datagram);
 
+int print_gauge_metric_collection(FILE* out);
+
 int find_gauge_by_name(char* name, gauge_metric** out);
 
 int create_gauge_record(statsd_datagram* datagram, gauge_metric** out);
