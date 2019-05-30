@@ -18,6 +18,8 @@ void init_counter_consumer(agent_config* config);
 
 void process_counter(statsd_datagram* datagram);
 
+int print_counter_metric_collection(FILE* out);
+
 int find_counter_by_name(char* name, counter_metric** out);
 
 int create_counter_record(statsd_datagram* datagram, counter_metric** out);

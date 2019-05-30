@@ -17,6 +17,7 @@ static agent_config* get_default_config() {
     config->max_unprocessed_packets = 2048;
     config->verbose = 0;
     config->debug = 0;
+    config->debug_output_filename = "debug";
     config->trace = 0;
     config->show_version = 0;
     config->port = (char *) "8125";
@@ -56,6 +57,7 @@ void read_agent_config_file(agent_config** dest, char* path) {
     const char VERBOSE_OPTION[] = "verbose";
     const char TRACE_OPTION[] = "trace";
     const char DEBUG_OPTION[] = "debug";
+    const char DEBUG_OUTPUT_FILENAME[] = "debug_output_filename";
     const char PARSER_TYPE_OPTION[] = "parser_type";
     while (fgets(line_buffer, 256, config) != NULL) {
         if (sscanf(line_buffer, "%s %s", option, value) != 2) {
@@ -75,6 +77,10 @@ void read_agent_config_file(agent_config** dest, char* path) {
             (*dest)->verbose = atoi(value);
         } else if (strcmp(option, DEBUG_OPTION) == 0) {
             (*dest)->debug = atoi(value);
+        } else if (strcmp(option, DEBUG_OUTPUT_FILENAME) == 0) {
+            (*dest)->debug_output_filename = (char *) malloc(strlen(value));
+            ALLOC_CHECK("Unable to assign memory for debug output path.");
+            strncat((*dest)->debug_output_filename, value, strlen(value));
         } else if (strcmp(option, VERSION_OPTION) == 0) {
             (*dest)->show_version = atoi(value);
         } else if (strcmp(option, TRACE_OPTION) == 0) {
@@ -99,6 +105,7 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
             { "debug", no_argument, 0, 1 },
             { "version", no_argument, 0, 1 },
             { "trace", no_argument, 0, 1 },
+            { "debug_output_filename", required_argument, 0, 'o' },
             { "max-udp", required_argument, 0, 'u' },
             { "tcpaddr", required_argument, 0, 't' },
             { "port", required_argument, 0, 'a' },
@@ -106,7 +113,7 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
             { 0, 0, 0, 0 }
         };
         int option_index = 0;
-        c = getopt_long_only(argc, argv, "u::t::a::p::", long_options, &option_index);
+        c = getopt_long_only(argc, argv, "o::u::t::a::p::", long_options, &option_index);
         if (c == -1) break;
         switch (c) {
             case 0:
@@ -126,6 +133,9 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
             case 'a':
                 (*dest)->port = optarg;
                 break;
+            case 'o':
+                (*dest)->debug_output_filename = optarg;
+                break;
             case 'p':
                 (*dest)->parser_type = atoi(optarg);
                 break;
@@ -141,6 +151,7 @@ void print_agent_config(agent_config* config) {
         puts("debug flag is set");
     if (config->show_version)
         puts("version flag is set");
+    printf("debug_output_filename: %s \n", config->debug_output_filename);
     printf("maxudp: %lu \n", config->max_udp_packet_size);
     printf("tcpaddr: %s \n", config->tcp_address);
     printf("port: %s \n", config->port);

@@ -19,17 +19,25 @@ void process_counter(statsd_datagram* datagram) {
     *counter = (struct counter_metric) { 0 };
     if (find_counter_by_name(datagram->metric, &counter)) {
         if (!update_counter_record(counter, datagram)) {
-            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            verbose_log("Throwing away datagram, semantically incorrect values.");
             free_datagram(datagram);
         }
     } else {
         if (create_counter_record(datagram, &counter)) {
-          add_counter_record(counter);
+            add_counter_record(counter);
         } else {
-            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+            verbose_log("Throwing away datagram, semantically incorrect values.");
             free_datagram(datagram);
         }
     }
+}
+
+int print_counter_metric_collection(FILE* out) {
+    long int i;
+    for (i = 0; i < g_counters.length; i++) {
+        fprintf(out, "%s = %llu (counter)\n", g_counters.values[i]->name, g_counters.values[i]->value);
+    }
+    return g_counters.length;
 }
 
 int find_counter_by_name(char* name, counter_metric** out) {
@@ -44,9 +52,6 @@ int find_counter_by_name(char* name, counter_metric** out) {
 }
 
 int create_counter_record(statsd_datagram* datagram, counter_metric** out) {
-    if (datagram->metric == NULL) {
-        return 0;
-    }
     if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
     }
@@ -69,6 +74,9 @@ counter_metric_collection* add_counter_record(counter_metric* counter) {
 }
 
 int update_counter_record(counter_metric* counter, statsd_datagram* datagram) {
+    if (datagram->value[0] == '-' || datagram->value[0] == '+') {
+        return 0;
+    }
     long long unsigned int value = strtoull(datagram->value, NULL, 10);
     if (errno == ERANGE) {
         return 0;

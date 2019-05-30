@@ -19,6 +19,8 @@ void init_duration_consumer(agent_config* config);
 
 void process_duration(statsd_datagram* datagram);
 
+int print_duration_metric_collection(FILE* out);
+
 int find_histogram_by_name(char* name, duration_metric** out);
 
 int create_duration_record(statsd_datagram* datagram, duration_metric** out);

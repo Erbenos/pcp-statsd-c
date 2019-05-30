@@ -32,6 +32,14 @@ void process_gauge(statsd_datagram* datagram) {
     }
 }
 
+int print_gauge_metric_collection(FILE* out) {
+    long int i;
+    for (i = 0; i < g_gauges.length; i++) {
+        fprintf(out, "%s = %lli (gauge)\n", g_gauges.values[i]->name, g_gauges.values[i]->value);
+    }
+    return g_gauges.length;
+}
+
 int find_gauge_by_name(char* name, gauge_metric** out) {
     long int i;
     for (i = 0; i < g_gauges.length; i++) {

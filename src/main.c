@@ -3,14 +3,23 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <chan/chan.h>
+#include <signal.h>
 
 #include "config-reader/config-reader.h"
 #include "statsd-parsers/statsd-parsers.h"
 #include "consumers/consumers.h"
 #include "utils/utils.h"
 
+void signal_handler(int num) {
+    if (num == SIGUSR1) {
+        consumer_request_output();
+    }
+}
+
 int main(int argc, char **argv)
 {
+    signal(SIGUSR1, signal_handler);
+
     pthread_t network_listener;
     pthread_t datagram_parser;
     pthread_t datagram_consumer;
@@ -46,5 +55,10 @@ int main(int argc, char **argv)
     if (pthread_join(datagram_consumer, NULL) != 0) {
         die(__LINE__, "Error joining datagram consumer thread.");
     }
+
+    chan_close(unprocessed_datagrams_q);
+    chan_close(parsed_datagrams_q);
+    chan_dispose(unprocessed_datagrams_q);
+    chan_dispose(parsed_datagrams_q);
     return 1;
 }
