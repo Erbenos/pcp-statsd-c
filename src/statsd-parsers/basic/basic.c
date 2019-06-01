@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
-#include "../statsd-parsers.h"
 #include "../../utils/utils.h"
+#include "../statsd-parsers.h"
+#include "basic.h"
 
 #define JSON_BUFFER_SIZE 4096
 
@@ -36,7 +37,6 @@ int parse(char* buffer, statsd_datagram** datagram) {
     char tags_json_buffer[JSON_BUFFER_SIZE];
     memset(tags_json_buffer, '\0', JSON_BUFFER_SIZE);
     int any_tags = 0;
-    int tag_buffer_index = 0;
     /* Flag field used to determine which memory to free in stats_datagram should data parsing fail, bits in this order
      * tags
      * metric
@@ -111,7 +111,7 @@ int parse(char* buffer, statsd_datagram** datagram) {
                             *(*datagram)->tags = (tag_collection) { 0 };
                             any_tags = 1;
                         }
-                        (*datagram)->tags->values = (tag*) realloc((*datagram)->tags->values, sizeof(tag*) * ((*datagram)->tags->length + 1));
+                        (*datagram)->tags->values = (tag**) realloc((*datagram)->tags->values, sizeof(tag*) * ((*datagram)->tags->length + 1));
                         (*datagram)->tags->values[(*datagram)->tags->length] = t;
                         (*datagram)->tags->length++;
                     }
@@ -186,7 +186,7 @@ int parse(char* buffer, statsd_datagram** datagram) {
         current_segment_length++;
     }
     free(segment);
-    if (required_fields_flags & field_allocated_flags != required_fields_flags)  {
+    if ((required_fields_flags & field_allocated_flags) != required_fields_flags)  {
         goto error_clean_up_end;
     }
     return 1;

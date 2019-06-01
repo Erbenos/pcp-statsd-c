@@ -2,15 +2,22 @@
 #include <string.h>
 #include <chan/chan.h>
 
+#include "../../statsd-parsers/statsd-parsers.h"
+#include "../../utils/utils.h"
 #include "consumers.h"
 #include "./metric-types/counter/counter.h"
 #include "./metric-types/duration/duration.h"
 #include "./metric-types/gauge/gauge.h"
-#include "../../utils/utils.h"
-#include "../../statsd-parsers/statsd-parsers.h"
 
+/**
+ * Flag to capture USR1 signal event, which is supposed mark request to output currently recorded data in debug file 
+ */
 static int g_output_requested = 0;
 
+/**
+ * Initializes metrics struct to empty values
+ * @arg config - Config (should there be need to pass detailed info into metrics)
+ */
 metrics* init_metrics(agent_config* config) {
     metrics* m = (metrics*) malloc(sizeof(metrics));
     ALLOC_CHECK("Unable to allocate memory for metrics wrapper");
@@ -20,12 +27,16 @@ metrics* init_metrics(agent_config* config) {
     ALLOC_CHECK("Unable to allocate memory for gauge collection");
     m->durations = (duration_metric_collection*) malloc(sizeof(duration_metric_collection));
     ALLOC_CHECK("Unable to allocate memory for duration collection");
-    m->counters = (counter_metric_collection*) {0}; 
-    m->gauges = (gauge_metric_collection*) {0}; 
-    m->durations = (duration_metric_collection*) {0}; 
+    *(m->counters) = (counter_metric_collection) {0}; 
+    *(m->gauges) = (gauge_metric_collection) {0}; 
+    *(m->durations) = (duration_metric_collection) {0}; 
     return m;
 }
 
+/**
+ * Thread startpoint - passes down given datagram to consumer to record value it contains
+ * @arg args - (consumer_args), see ~/statsd-parsers/statsd-parsers.h
+ */
 void* consume_datagram(void* args) {
     chan_t* parsed = ((consumer_args*)args)->parsed_datagrams;
     agent_config* config = ((consumer_args*)args)->config;
@@ -61,10 +72,19 @@ void* consume_datagram(void* args) {
     }
 }
 
+/**
+ * Sets flag notifying that output was requested
+ */
 void consumer_request_output() {
     g_output_requested = 1;
 }
 
+/**
+ * Checks if given metric name is available (it isn't recorded yet)
+ * @arg m - Metrics struct (storage in which to check for name availability)
+ * @arg name - Name to be checked
+ * @return 1 on success else 0
+ */
 int check_metric_name_available(metrics* m, char* name) {
     if (!find_counter_by_name(m, name, NULL) ||
         !find_gauge_by_name(m, name, NULL) ||
@@ -74,6 +94,11 @@ int check_metric_name_available(metrics* m, char* name) {
     return 0;
 }
 
+/**
+ * Prints values of currently recorded metrics with total count, if config allows it, into file that is specified in it under "debug" key
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config to check against
+ */
 void print_recorded_values(metrics* m, agent_config* config) {
     if (strlen(config->debug_output_filename) == 0) return; 
     FILE* f;
@@ -86,4 +111,9 @@ void print_recorded_values(metrics* m, agent_config* config) {
     }
     fprintf(f, "Total number of records: %llu \n", record_count);
     fclose(f);
+}
+
+metric_metadata* create_record_meta(statsd_datagram* datagram) {
+    // TODO: this is not yet implemented
+    return NULL;
 }

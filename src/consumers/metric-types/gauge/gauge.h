@@ -1,22 +1,6 @@
 #ifndef GAUGE_
 #define GAUGE_
 
-#include "../../../config-reader/config-reader.h"
-#include "../../../statsd-parsers/statsd-parsers.h"
-#include "../../shared/shared.h"
-#include "../../consumers.h"
-
-typedef struct gauge_metric {
-    char* name;
-    metric_metadata* meta;
-    signed long long int value;
-} gauge_metric;
-
-typedef struct gauge_metric_collection {
-    gauge_metric** values;
-    long int length;
-} gauge_metric_collection;
-
 void init_gauge_consumer(agent_config* config);
 
 /**

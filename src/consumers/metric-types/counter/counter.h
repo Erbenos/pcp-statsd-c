@@ -1,22 +1,5 @@
-#include "../../consumers.h"
-
 #ifndef COUNTER_
 #define COUNTER_
-
-#include "../../../config-reader/config-reader.h"
-#include "../../../statsd-parsers/statsd-parsers.h"
-#include "../../shared/shared.h"
-
-typedef struct counter_metric {
-    char* name;
-    metric_metadata* meta;
-    unsigned long long int value;
-} counter_metric;
-
-typedef struct counter_metric_collection {
-    counter_metric** values;
-    long int length;
-} counter_metric_collection;
 
 void init_counter_consumer(agent_config* config);
 
@@ -32,7 +15,7 @@ void process_counter(metrics* m, statsd_datagram* datagram);
  * @arg out - OPENED file handle
  * @return Total count of counters printed
  */
-int print_counter_metric_collection(FILE* out);
+int print_counter_metric_collection(metrics* m, FILE* out);
 
 /**
  * Find counter by name
