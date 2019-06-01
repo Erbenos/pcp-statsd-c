@@ -6,51 +6,74 @@
 #include "../../consumers.h"
 #include "./gauge.h"
 
-static gauge_metric_collection g_gauges = { 0 };
-
-// TODO: do any initialization local to duration consumer, should that be needed
 void init_gauge_consumer(agent_config* config) {
 
 }
 
-void process_gauge(statsd_datagram* datagram) {
+/**
+ * Processes datagram struct into gauge metric 
+ * @arg m - Metrics struct acting as metrics wrapper
+ * @arg datagram - Datagram to be processed
+ */
+void process_gauge(metrics* m, statsd_datagram* datagram) {
     gauge_metric* gauge = (struct gauge_metric*) malloc(sizeof(gauge_metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder gauge record");
     *gauge = (struct gauge_metric) { 0 };
-    if (find_gauge_by_name(datagram->metric, &gauge)) {
+    if (find_gauge_by_name(m, datagram->metric, &gauge)) {
         if (!update_gauge_record(gauge, datagram)) {
             verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
             free_datagram(datagram);
         }
     } else {
-        if (create_gauge_record(datagram, &gauge)) {
-            add_gauge_record(gauge);
-        } else {
-            verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
-            free_datagram(datagram);
+        if (check_metric_name_available(m, datagram->metric)) {
+            if (create_gauge_record(datagram, &gauge)) {
+                add_gauge_record(m, gauge);
+            } else {
+                verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
+                free_datagram(datagram);
+            }
         }
     }
 }
 
-int print_gauge_metric_collection(FILE* out) {
+/**
+ * Writes information about recorded gauges into file
+ * @arg out - OPENED file handle
+ * @return Total count of counters printed
+ */
+int print_gauge_metric_collection(metrics* m, FILE* out) {
+    gauge_metric_collection* gauges = m->gauges;
     long int i;
-    for (i = 0; i < g_gauges.length; i++) {
-        fprintf(out, "%s = %lli (gauge)\n", g_gauges.values[i]->name, g_gauges.values[i]->value);
+    for (i = 0; i < gauges->length; i++) {
+        fprintf(out, "%s = %lli (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
     }
-    return g_gauges.length;
+    return gauges->length;
 }
 
-int find_gauge_by_name(char* name, gauge_metric** out) {
+/**
+ * Find gauge by name
+ * @arg name - Metric name to search for
+ * @arg out - Placeholder gauge_metric
+ * @return 1 when any found
+ */
+int find_gauge_by_name(metrics* m, char* name, gauge_metric** out) {
+    gauge_metric_collection* gauges = m->gauges;
     long int i;
-    for (i = 0; i < g_gauges.length; i++) {
-        if (strcmp(name, g_gauges.values[i]->name) == 0) {
-            *out = g_gauges.values[i];
+    for (i = 0; i < gauges->length; i++) {
+        if (strcmp(name, gauges->values[i]->name) == 0) {
+            *out = gauges->values[i];
             return 1;
         }
     }
     return 0;
 }
 
+/**
+ * Create gauge record 
+ * @arg datagram - Datagram with data that should populate new gauge record
+ * @arg out - Placeholder gauge_metric
+ * @return 1 on success
+ */
 int create_gauge_record(statsd_datagram* datagram, gauge_metric** out) {
     if (datagram->metric == NULL) {
         return 0;
@@ -65,14 +88,26 @@ int create_gauge_record(statsd_datagram* datagram, gauge_metric** out) {
     return 1;
 }
 
-gauge_metric_collection* add_gauge_record(gauge_metric* gauge) {
-    g_gauges.values = realloc(g_gauges.values, g_gauges.length + 1);
+/**
+ * Adds gauge record
+ * @arg gauge - Gauge metric to me added
+ * @return all gauges
+ */
+gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge) {
+    counter_metric_collection* gauges = m->gauges;
+    gauges->values = realloc(gauges->values, gauges->length + 1);
     ALLOC_CHECK("Unable to allocate memory for gauge values");
-    g_gauges.values[g_gauges.length] = gauge;
-    g_gauges.length++;
-    return &g_gauges;
+    gauges->values[gauges->length] = gauge;
+    gauges->length++;
+    return gauges;
 }
 
+/**
+ * Update gauge record
+ * @arg gauge - Gauge metric to be updated
+ * @arg datagram - Data with which to update
+ * @return 1 on success
+ */
 int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram) {
     int substract = 0;
     int add = 0;
@@ -103,8 +138,4 @@ int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram) {
         gauge->value = value;
     }
     return 1;
-}
-
-gauge_metric_collection* get_gauges() {
-    return &g_gauges;
 }

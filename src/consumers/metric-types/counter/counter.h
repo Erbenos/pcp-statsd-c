@@ -1,7 +1,11 @@
+#include "../../consumers.h"
+
+#ifndef COUNTER_
+#define COUNTER_
+
 #include "../../../config-reader/config-reader.h"
 #include "../../../statsd-parsers/statsd-parsers.h"
 #include "../../shared/shared.h"
-#include "../../consumers.h"
 
 typedef struct counter_metric {
     char* name;
@@ -16,16 +20,49 @@ typedef struct counter_metric_collection {
 
 void init_counter_consumer(agent_config* config);
 
-void process_counter(statsd_datagram* datagram);
+/**
+ * Processes datagram struct into counter metric 
+ * @arg m - Metrics struct acting as metrics wrapper
+ * @arg datagram - Datagram to be processed
+ */
+void process_counter(metrics* m, statsd_datagram* datagram);
 
+/**
+ * Writes information about recorded counters into file
+ * @arg out - OPENED file handle
+ * @return Total count of counters printed
+ */
 int print_counter_metric_collection(FILE* out);
 
-int find_counter_by_name(char* name, counter_metric** out);
+/**
+ * Find counter by name
+ * @arg name - Metric name to search for
+ * @arg out - Placeholder counter metric
+ * @return 1 when any found
+ */
+int find_counter_by_name(metrics* m, char* name, counter_metric** out);
 
+/**
+ * Create counter record 
+ * @arg datagram - Datagram with data that should populate new counter record
+ * @arg out - Placeholder counter_metric
+ * @return 1 on success
+ */
 int create_counter_record(statsd_datagram* datagram, counter_metric** out);
 
-counter_metric_collection* add_counter_record(counter_metric* counter);
+/**
+ * Adds counter record
+ * @arg counter - Counter metric to me added
+ * @return all counters
+ */
+counter_metric_collection* add_counter_record(metrics* m, counter_metric* counter);
 
+/**
+ * Update counter record
+ * @arg counter - Counter metric to be updated
+ * @arg datagram - Data with which to update
+ * @return 1 on success
+ */
 int update_counter_record(counter_metric* counter, statsd_datagram* datagram);
 
-counter_metric_collection* get_counters();
+#endif

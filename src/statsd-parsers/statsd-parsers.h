@@ -1,9 +1,10 @@
+#ifndef STATSD_PARSERS_
+#define STATSD_PARSERS_
+
 #include <chan/chan.h>
 
 #include "../config-reader/config-reader.h"
-
-#ifndef STATSD_PARSERS_
-#define STATSD_PARSERS_
+#include "../consumers/consumers.h"
 
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;
@@ -56,9 +57,10 @@ typedef struct consumer_args
 {
     agent_config* config;
     chan_t* parsed_datagrams;
+    metrics* metrics_wrapper;
 } consumer_args;
 
-consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel);
+consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel, metrics* m);
 
 void* statsd_parser_consume(void* args);
 
