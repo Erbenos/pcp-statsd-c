@@ -94,7 +94,7 @@ int create_gauge_record(statsd_datagram* datagram, gauge_metric** out) {
  * @return all gauges
  */
 gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge) {
-    counter_metric_collection* gauges = m->gauges;
+    gauge_metric_collection* gauges = m->gauges;
     gauges->values = realloc(gauges->values, gauges->length + 1);
     ALLOC_CHECK("Unable to allocate memory for gauge values");
     gauges->values[gauges->length] = gauge;

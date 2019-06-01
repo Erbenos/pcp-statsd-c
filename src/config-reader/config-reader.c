@@ -4,12 +4,21 @@
 #include <string.h>
 #include <unistd.h>
 
-const int READ_FROM_FILE = 0;
-const int READ_FROM_CMD = 1;
+/**
+ * Flags for available config source
+ */
+#define READ_FROM_FILE 0
+#define READ_FROM_CMD 1
 
-static const int PARSER_TRIVIAL = 0;
-static const int PARSER_RAGEL = 1;
+/**
+ * Flags for available parser types
+ */
+#define PARSER_TRIVIAL 0
+#define PARSER_RAGEL 1
 
+/**
+ * Returns default program config
+ */
 static agent_config* get_default_config() {
     agent_config* config = (agent_config*) malloc(sizeof(agent_config));
     config->max_udp_packet_size = 1472;
@@ -26,6 +35,12 @@ static agent_config* get_default_config() {
     return config;
 }
 
+/**
+ * Read agent config from either file or command line arguments
+ * @arg src_flag - Specifies config source, 0 = READ_FROM_FILE, 1 = READ_FROM_CMD
+ * @arg config_path - Path to config file
+ * @return Program configuration
+ */
 agent_config* read_agent_config(int src_flag, char* config_path, int argc, char **argv) {
     agent_config* config = get_default_config();
     if (!(src_flag == READ_FROM_CMD || src_flag == READ_FROM_FILE)) {
@@ -39,6 +54,11 @@ agent_config* read_agent_config(int src_flag, char* config_path, int argc, char 
     return config;
 }
 
+/**
+ * Reads program config from given path
+ * @arg agent_config - Placeholder config to write what was read to
+ * @arg path - Path to read file from
+ */
 void read_agent_config_file(agent_config** dest, char* path) {
     char line_buffer[256];
     int line_index = 0;
@@ -97,6 +117,10 @@ void read_agent_config_file(agent_config** dest, char* path) {
     fclose(config);
 }
 
+/**
+ * Reads program config from command line arguments
+ * @arg agent_config - Placeholder config to write what was read to
+ */
 void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
     int c;
     while(1) {
@@ -143,6 +167,10 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
     }
 }
 
+/**
+ * Print out agent config to STDOUT
+ * @arg config - Config to print out
+ */
 void print_agent_config(agent_config* config) {
     printf("---------------------------\n");
     if (config->verbose)

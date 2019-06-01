@@ -1,14 +1,10 @@
+#include <hdr/hdr_histogram.h>
+#include <string.h>
 #include "../../../config-reader/config-reader.h"
 #include "../../../statsd-parsers/statsd-parsers.h"
 #include "../../../utils/utils.h"
 #include "../../consumers.h"
-#include "./duration.h"
-#include <hdr/hdr_histogram.h>
-
-#ifndef DURATION_
-#define DURATION_
-
-static duration_metric_collection g_durations = { 0 };    
+#include "duration.h"
 
 // TODO: do any initialization local to duration consumer, should that be needed
 void init_duration_consumer(agent_config* config) {
@@ -138,5 +134,3 @@ int update_duration_record(duration_metric* duration, statsd_datagram* datagram)
     hdr_record_value(duration->histogram, value);
     return 1;
 }
-
-#endif

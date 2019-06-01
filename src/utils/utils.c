@@ -18,10 +18,27 @@
 #define COUNTER_METRIC "c"
 #define GAUGE_METRIC "g"
 
-static int verbose_flag = 0;
-static int trace_flag = 0;
-static int debug_flag = 0;
+/**
+ * Flag used to determine if VERBOSE output is allowed to be printed
+ */
+static int g_verbose_flag = 0;
 
+/**
+ * Flag used to determine if TRACE output is allowed to be printed
+ */
+static int g_trace_flag = 0;
+
+/**
+ * Flag used to determine if DEBUG output is allowed to be printed
+ */
+static int g_debug_flag = 0;
+
+/**
+ * Kills application with given message
+ * @arg line_number - Current line number
+ * @arg format - Format string
+ * @arg ... - variables to print
+ */
 void die(int line_number, const char* format, ...)
 {
     va_list vargs;
@@ -33,6 +50,12 @@ void die(int line_number, const char* format, ...)
     exit(1);
 }
 
+/**
+ * Prints warning message
+ * @arg line_number - Current line number
+ * @arg format - Format string
+ * @arg ... - variables to print
+ */
 void warn(int line_number, const char* format, ...) {
     va_list vargs;
     va_start(vargs, format);
@@ -42,6 +65,12 @@ void warn(int line_number, const char* format, ...) {
     va_end(vargs);
 }
 
+/**
+ * Sanitizes string
+ * Swaps '/', '-', ' ' characters with '-'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails.
+ * @arg src - String to be sanitized
+ * @return 1 on success
+ */
 int sanitize_string(char *src) {
     int segment_length = strlen(src);
     if (segment_length == 0) {
@@ -67,6 +96,12 @@ int sanitize_string(char *src) {
     return 1;
 }
 
+/**
+ * Validates string
+ * Checks if there are any non numerical characters (0-9), excluding '+' and '-' on first position and is not empty.
+ * @arg src - String to be validated
+ * @return 1 on success
+ */
 int sanitize_metric_val_string(char* src) {
     int segment_length = strlen(src);
     if (segment_length == 0) {
@@ -94,6 +129,12 @@ int sanitize_metric_val_string(char* src) {
     return 1;
 }
 
+/**
+ * Validates string
+ * Checks if string is convertible to double and is not empty.
+ * @arg src - String to be validated
+ * @return 1 on success
+ */
 int sanitize_sampling_val_string(char* src) {
     int segment_length = strlen(src);
     if (segment_length == 0) {
@@ -107,6 +148,12 @@ int sanitize_sampling_val_string(char* src) {
     return 1;
 }
 
+/**
+ * Validates string
+ * Checks if string is matching one of metric identifiers ("ms" = duration, "g" = gauge, "c" = counter)
+ * @arg src - String to be validated
+ * @return 1 on success
+ */
 int sanitize_type_val_string(char* src) {
     if (strcmp(src, GAUGE_METRIC) == 0 ||
         strcmp(src, COUNTER_METRIC) == 0 ||
@@ -116,8 +163,13 @@ int sanitize_type_val_string(char* src) {
     return 0;
 }
 
+/**
+ * Logs VERBOSE message - if config settings allows it
+ * @arg format - Format string
+ * @arg ... - variables to print
+ */
 void verbose_log(const char* format, ...) {
-    if (verbose_flag) {
+    if (g_verbose_flag) {
         va_list vargs;
         va_start(vargs, format);
         fprintf(stdout, YEL "VERBOSE LOG: " RESET);
@@ -127,8 +179,13 @@ void verbose_log(const char* format, ...) {
     }
 }
 
+/**
+ * Logs DEBUG message - if config settings allows it
+ * @arg format - Format string
+ * @arg ... - variables to print
+ */
 void debug_log(const char* format, ...) {
-    if (debug_flag) {
+    if (g_debug_flag) {
         va_list vargs;
         va_start(vargs, format);
         fprintf(stdout, MAG "DEBUG LOG: " RESET);
@@ -138,8 +195,13 @@ void debug_log(const char* format, ...) {
     }
 }
 
+/**
+ * Logs TRACE message - if config settings allows it
+ * @arg format - Format string
+ * @arg ... - variables to print
+ */
 void trace_log(const char* format, ...) {
-    if (trace_flag) {
+    if (g_trace_flag) {
         va_list vargs;
         va_start(vargs, format);
         fprintf(stdout, CYN "TRACE LOG: " RESET);
@@ -149,8 +211,12 @@ void trace_log(const char* format, ...) {
     }
 }
 
+/**
+ * Initializes debugging/verbose/tracing flags based on given config
+ * @arg config - Config to check against
+ */
 void init_loggers(agent_config* config) {
-    verbose_flag = config->verbose;
-    trace_flag = config->trace;
-    debug_flag = config->debug;
+    g_verbose_flag = config->verbose;
+    g_trace_flag = config->trace;
+    g_debug_flag = config->debug;
 }

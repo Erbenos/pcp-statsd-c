@@ -1,22 +1,7 @@
 #ifndef DURATION_
 #define DURATION_
 
-#include "../../../config-reader/config-reader.h"
-#include "../../../statsd-parsers/statsd-parsers.h"
-#include "../../shared/shared.h"
-#include "../../consumers.h"
 #include <hdr/hdr_histogram.h>
-
-typedef struct duration_metric {
-    char* name;
-    metric_metadata* meta;
-    struct hdr_histogram* histogram;
-} duration_metric;
-
-typedef struct duration_metric_collection {
-    duration_metric** values;
-    long int length;
-} duration_metric_collection;
 
 void init_duration_consumer(agent_config* config);
 

@@ -4,7 +4,8 @@
 #include <chan/chan.h>
 
 #include "../config-reader/config-reader.h"
-#include "../consumers/consumers.h"
+
+typedef struct metrics metrics;
 
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;
