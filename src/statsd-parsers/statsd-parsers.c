@@ -88,13 +88,14 @@ statsd_parser_args* create_parser_args(agent_config* config, chan_t* unprocessed
     return parser_args;
 }
 
-consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel) {
+consumer_args* create_consumer_args(agent_config* config, chan_t* parsed_channel, metrics* m) {
     struct consumer_args* consumer_args = (struct consumer_args*) malloc(sizeof(struct consumer_args));
     ALLOC_CHECK("Unable to assign memory for parser aguments.");
     consumer_args->config = (agent_config*) malloc(sizeof(agent_config*));
     ALLOC_CHECK("Unable to assign memory for parser config.");
     consumer_args->config = config;
     consumer_args->parsed_datagrams = parsed_channel;
+    consumer_args->metrics_wrapper = m;
     return consumer_args;
 }
 

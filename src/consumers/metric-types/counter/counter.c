@@ -6,51 +6,74 @@
 #include "../../consumers.h"
 #include "./counter.h"
 
-static counter_metric_collection g_counters = { 0 };
-
-// TODO: do any initialization local to duration consumer, should that be needed
 void init_counter_consumer(agent_config* config) {
 
 }
 
-void process_counter(statsd_datagram* datagram) {
+/**
+ * Processes datagram struct into counter metric 
+ * @arg m - Metrics struct acting as metrics wrapper
+ * @arg datagram - Datagram to be processed
+ */
+void process_counter(metrics* m, statsd_datagram* datagram) {
     counter_metric* counter = (struct counter_metric*) malloc(sizeof(counter_metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder counter record");
     *counter = (struct counter_metric) { 0 };
-    if (find_counter_by_name(datagram->metric, &counter)) {
+    if (find_counter_by_name(m, datagram->metric, &counter)) {
         if (!update_counter_record(counter, datagram)) {
             verbose_log("Throwing away datagram, semantically incorrect values.");
             free_datagram(datagram);
         }
     } else {
-        if (create_counter_record(datagram, &counter)) {
-            add_counter_record(counter);
-        } else {
-            verbose_log("Throwing away datagram, semantically incorrect values.");
-            free_datagram(datagram);
+        if (check_metric_name_available(m, datagram->metric)) {
+            if (create_counter_record(datagram, &counter)) {
+                add_counter_record(m, counter);
+            } else {
+                verbose_log("Throwing away datagram, semantically incorrect values.");
+                free_datagram(datagram);
+            }
         }
     }
 }
 
-int print_counter_metric_collection(FILE* out) {
+/**
+ * Writes information about recorded counters into file
+ * @arg out - OPENED file handle
+ * @return Total count of counters printed
+ */
+int print_counter_metric_collection(metrics* m, FILE* out) {
+    counter_metric_collection* counters = m->counters;
     long int i;
-    for (i = 0; i < g_counters.length; i++) {
-        fprintf(out, "%s = %llu (counter)\n", g_counters.values[i]->name, g_counters.values[i]->value);
+    for (i = 0; i < counters->length; i++) {
+        fprintf(out, "%s = %llu (counter)\n", counters->values[i]->name, counters->values[i]->value);
     }
-    return g_counters.length;
+    return counters->length;
 }
 
-int find_counter_by_name(char* name, counter_metric** out) {
+/**
+ * Find counter by name
+ * @arg name - Metric name to search for
+ * @arg out - Placeholder counter metric
+ * @return 1 when any found
+ */
+int find_counter_by_name(metrics* m, char* name, counter_metric** out) {
+    counter_metric_collection* counters = m->counters;
     long int i;
-    for (i = 0; i < g_counters.length; i++) {
-        if (strcmp(name, g_counters.values[i]->name) == 0) {
-            *out = g_counters.values[i];
+    for (i = 0; i < counters->length; i++) {
+        if (strcmp(name, counters->values[i]->name) == 0) {
+            *out = counters->values[i];
             return 1;
         }
     }
     return 0;
 }
 
+/**
+ * Create counter record 
+ * @arg datagram - Datagram with data that should populate new counter record
+ * @arg out - Placeholder counter_metric
+ * @return 1 on success
+ */
 int create_counter_record(statsd_datagram* datagram, counter_metric** out) {
     if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
@@ -65,14 +88,26 @@ int create_counter_record(statsd_datagram* datagram, counter_metric** out) {
     return 1;
 }
 
-counter_metric_collection* add_counter_record(counter_metric* counter) {
-    g_counters.values = realloc(g_counters.values, g_counters.length + 1);
+/**
+ * Adds counter record
+ * @arg counter - Counter metric to me added
+ * @return all counters
+ */
+counter_metric_collection* add_counter_record(metrics* m, counter_metric* counter) {
+    counter_metric_collection* counters = m->counters;
+    counters->values = realloc(counters->values, counters->length + 1);
     ALLOC_CHECK("Unable to allocate memory for counter values");
-    g_counters.values[g_counters.length] = counter;
-    g_counters.length++;
-    return &g_counters;
+    counters->values[counters->length] = counter;
+    counters->length++;
+    return counters;
 }
 
+/**
+ * Update counter record
+ * @arg counter - Counter metric to be updated
+ * @arg datagram - Data with which to update
+ * @return 1 on success
+ */
 int update_counter_record(counter_metric* counter, statsd_datagram* datagram) {
     if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
@@ -83,8 +118,4 @@ int update_counter_record(counter_metric* counter, statsd_datagram* datagram) {
     }
     counter->value += value;
     return 1;
-}
-
-counter_metric_collection* get_counters() {
-    return &g_counters;
 }

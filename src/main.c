@@ -34,9 +34,10 @@ int main(int argc, char **argv)
     chan_t* unprocessed_datagrams_q = chan_init(config->max_unprocessed_packets);
     chan_t* parsed_datagrams_q = chan_init(config->max_unprocessed_packets);
 
+    metrics* m = init_metrics(config);
     statsd_listener_args* listener_args = create_listener_args(config, unprocessed_datagrams_q);
     statsd_parser_args* parser_args = create_parser_args(config, unprocessed_datagrams_q, parsed_datagrams_q);
-    consumer_args* consumer_args = create_consumer_args(config, parsed_datagrams_q);
+    consumer_args* consumer_args = create_consumer_args(config, parsed_datagrams_q, m);
 
     int pthread_errno = 0; 
     pthread_errno = pthread_create(&network_listener, NULL, statsd_network_listen, listener_args);
