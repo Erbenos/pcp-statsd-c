@@ -12,10 +12,10 @@ void process_gauge(metrics* m, statsd_datagram* datagram);
 
 /**
  * Writes information about recorded gauges into file
- * @arg out - OPENED file handle
- * @return Total count of counters printed
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_gauge_metric_collection(metrics* m, FILE* out);
+void print_recorded_gauges(metrics* m, agent_config* config);
 
 /**
  * Find gauge by name

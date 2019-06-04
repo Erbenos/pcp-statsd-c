@@ -38,25 +38,32 @@ void process_duration(metrics* m, statsd_datagram* datagram) {
 }
 
 /**
- * Writes information about recorded histograms into file
- * @arg out - OPENED file handle
- * @return Total count of histograms printed
+ * Writes information about recorded durations into file
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_duration_metric_collection(metrics* m, FILE* out) {
+void print_recorded_durations(metrics* m, agent_config* config) {
     duration_metric_collection* durations = m->durations;
-    long int i;
+    if (strlen(config->debug_output_filename) == 0) return; 
+    FILE* f;
+    f = fopen(config->debug_output_filename, "a+");
+    if (f == NULL) {
+        return;
+    }
+    long long int i;
     for (i = 0; i < durations->length; i++) {
-        fprintf(out, "%s (duration) \n", durations->values[i]->name);
+        fprintf(f, "%s (duration) \n", durations->values[i]->name);
         hdr_percentiles_print(
             durations->values[i]->histogram,
-            out,
+            f,
             5,
             1.0,
             CLASSIC
         );
-        fprintf(out, "\n");
+        fprintf(f, "\n");
     }
-    return durations->length;
+    fprintf(f, "Total number of duration records: %lu \n", durations->length);
+    fclose(f);
 }
 
 /**

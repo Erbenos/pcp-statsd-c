@@ -38,16 +38,23 @@ void process_counter(metrics* m, statsd_datagram* datagram) {
 
 /**
  * Writes information about recorded counters into file
- * @arg out - OPENED file handle
- * @return Total count of counters printed
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_counter_metric_collection(metrics* m, FILE* out) {
+void print_recorded_counters(metrics* m, agent_config* config) {
     counter_metric_collection* counters = m->counters;
-    long int i;
-    for (i = 0; i < counters->length; i++) {
-        fprintf(out, "%s = %llu (counter)\n", counters->values[i]->name, counters->values[i]->value);
+    if (strlen(config->debug_output_filename) == 0) return; 
+    FILE* f;
+    f = fopen(config->debug_output_filename, "a+");
+    if (f == NULL) {
+        return;
     }
-    return counters->length;
+    long long int i;
+    for (i = 0; i < counters->length; i++) {
+        fprintf(f, "%s = %llu (counter)\n", counters->values[i]->name, counters->values[i]->value);
+    }
+    fprintf(f, "Total number of counter records: %lu \n", counters->length);
+    fclose(f);
 }
 
 /**

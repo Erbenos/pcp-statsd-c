@@ -38,16 +38,23 @@ void process_gauge(metrics* m, statsd_datagram* datagram) {
 
 /**
  * Writes information about recorded gauges into file
- * @arg out - OPENED file handle
- * @return Total count of counters printed
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_gauge_metric_collection(metrics* m, FILE* out) {
+void print_recorded_gauges(metrics* m, agent_config* config) {
     gauge_metric_collection* gauges = m->gauges;
-    long int i;
-    for (i = 0; i < gauges->length; i++) {
-        fprintf(out, "%s = %lli (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
+    if (strlen(config->debug_output_filename) == 0) return; 
+    FILE* f;
+    f = fopen(config->debug_output_filename, "a+");
+    if (f == NULL) {
+        return;
     }
-    return gauges->length;
+    long long int i;
+    for (i = 0; i < gauges->length; i++) {
+        fprintf(f, "%s = %lli (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
+    }
+    fprintf(f, "Total number of gauge records: %lu \n", gauges->length);
+    fclose(f);
 }
 
 /**

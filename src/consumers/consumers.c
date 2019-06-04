@@ -63,7 +63,9 @@ void* consume_datagram(void* args) {
                 {
                     if (g_output_requested) {
                         verbose_log("Output of recorded values request caught.");
-                        print_recorded_values(m, config);
+                        print_recorded_counters(m, config);
+                        print_recorded_gauges(m, config);
+                        print_recorded_durations(m, config);
                         verbose_log("Recorded values output.");
                         g_output_requested = 0;
                     }
@@ -92,26 +94,6 @@ int check_metric_name_available(metrics* m, char* name) {
             return 1;
         }
     return 0;
-}
-
-/**
- * Prints values of currently recorded metrics with total count, if config allows it, into file that is specified in it under "debug" key
- * @arg m - Metrics struct (what values to print)
- * @arg config - Config to check against
- */
-void print_recorded_values(metrics* m, agent_config* config) {
-    if (strlen(config->debug_output_filename) == 0) return; 
-    FILE* f;
-    f = fopen(config->debug_output_filename, "w+");
-    if (f == NULL) {
-        return;
-    }
-    long long int record_count = 0;
-    record_count += print_counter_metric_collection(m, f);
-    record_count += print_gauge_metric_collection(m, f);
-    record_count += print_duration_metric_collection(m, f);
-    fprintf(f, "Total number of records: %llu \n", record_count);
-    fclose(f);
 }
 
 metric_metadata* create_record_meta(statsd_datagram* datagram) {

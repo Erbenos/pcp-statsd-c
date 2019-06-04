@@ -72,13 +72,6 @@ void consumer_request_output();
  */
 int check_metric_name_available(metrics* m, char* name);
 
-/**
- * Prints values of currently recorded metrics with total count, if config allows it, into file that is specified in it under "debug" key
- * @arg m - Metrics struct (what values to print)
- * @arg config - Config to check against
- */
-void print_recorded_values(metrics* m, agent_config* config);
-
 metric_metadata* create_record_meta(statsd_datagram* datagram);
 
 #endif

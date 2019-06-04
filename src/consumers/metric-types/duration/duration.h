@@ -13,11 +13,11 @@ void init_duration_consumer(agent_config* config);
 void process_duration(metrics* m, statsd_datagram* datagram);
 
 /**
- * Writes information about recorded histograms into file
- * @arg out - OPENED file handle
- * @return Total count of histograms printed
+ * Writes information about recorded durations into file
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_duration_metric_collection(metrics* m, FILE* out);
+void print_recorded_durations(metrics* m, agent_config* config);
 
 /**
  * Find histogram by name

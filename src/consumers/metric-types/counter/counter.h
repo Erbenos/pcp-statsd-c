@@ -12,10 +12,10 @@ void process_counter(metrics* m, statsd_datagram* datagram);
 
 /**
  * Writes information about recorded counters into file
- * @arg out - OPENED file handle
- * @return Total count of counters printed
+ * @arg m - Metrics struct (what values to print)
+ * @arg config - Config containing information about where to output
  */
-int print_counter_metric_collection(metrics* m, FILE* out);
+void print_recorded_counters(metrics* m, agent_config* config);
 
 /**
  * Find counter by name
