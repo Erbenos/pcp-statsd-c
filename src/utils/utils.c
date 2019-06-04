@@ -119,7 +119,7 @@ int sanitize_metric_val_string(char* src) {
                 return 0;
             }
         } else {
-            if ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') {
+            if (((int) current_char >= (int) '0' && (int) current_char <= (int) '9') || current_char == '.') {
                 continue;
             } else {
                 return 0;

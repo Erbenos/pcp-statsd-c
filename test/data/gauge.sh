@@ -7,12 +7,15 @@ call_endpoint() {
 ############################
 # Simple correct case
 
-echo "login:1|g"    | call_endpoint
-echo "login:3|g"    | call_endpoint
-echo "login:5|g"    | call_endpoint
-echo "logout:4|g"   | call_endpoint
-echo "logout:2|g"   | call_endpoint
-echo "logout:2|g"   | call_endpoint
+echo "login:1|g"        | call_endpoint
+echo "login:3|g"        | call_endpoint
+echo "login:5|g"        | call_endpoint
+echo "logout:4|g"       | call_endpoint
+echo "logout:2|g"       | call_endpoint
+echo "logout:2|g"       | call_endpoint
+echo "login:+0.5|g"     | call_endpoint
+echo "login:-0.12|g"    | call_endpoint
+echo "logout:0.128|g"   | call_endpoint
 
 ## Results:
 ## login = 5

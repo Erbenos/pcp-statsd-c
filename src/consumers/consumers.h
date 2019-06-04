@@ -21,7 +21,7 @@ typedef struct counter_metric_collection {
 typedef struct gauge_metric {
     char* name;
     metric_metadata* meta;
-    signed long long int value;
+    double value;
 } gauge_metric;
 
 typedef struct gauge_metric_collection {

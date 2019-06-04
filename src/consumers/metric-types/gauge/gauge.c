@@ -51,7 +51,7 @@ void print_recorded_gauges(metrics* m, agent_config* config) {
     }
     long long int i;
     for (i = 0; i < gauges->length; i++) {
-        fprintf(f, "%s = %lli (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
+        fprintf(f, "%s = %lf (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
     }
     fprintf(f, "Total number of gauge records: %lu \n", gauges->length);
     fclose(f);
@@ -85,7 +85,7 @@ int create_gauge_record(statsd_datagram* datagram, gauge_metric** out) {
     if (datagram->metric == NULL) {
         return 0;
     }
-    signed long long int value = strtoll(datagram->value, NULL, 10);
+    signed long long int value = strtod(datagram->value, NULL);
     if (errno == ERANGE) {
         return 0;
     }
@@ -124,12 +124,12 @@ int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram) {
     if (datagram->value[0] == '-') {
         substract = 1; 
     }
-    signed long long int value;
+    double value;
     if (substract || add) {
         char* substr = &(datagram->value[1]);
-        value = strtoll(substr, NULL, 10);
+        value = strtod(substr, NULL);
     } else {
-        value = strtoll(datagram->value, NULL, 10);
+        value = strtod(datagram->value, NULL);
     }
     if (errno == ERANGE) {
         return 0;
