@@ -1,6 +1,6 @@
 $(info Running PCP-STATSD makefile)
 
-TARGET_EXEC ?= pcp-statsd.out
+TARGET_EXEC ?= pcp-statsd
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -29,7 +29,7 @@ clean:
 	$(RM) -r $(BUILD_DIR)
 
 run: 
-	./build/pcp-statsd.out
+	./build/pcp-statsd
 
 -include $(DEPS)
 
