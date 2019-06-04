@@ -22,7 +22,7 @@ int print_duration_metric_collection(metrics* m, FILE* out);
 /**
  * Find histogram by name
  * @arg name - Metric name to search for
- * @arg out - Placeholder histogram metric
+ * @arg out - @arg out - Placeholder counter metric into which contents of item are passed into, histogram itself is copied by reference
  * @return 1 when any found
  */
 int find_histogram_by_name(metrics* m, char* name, duration_metric** out);
@@ -40,7 +40,7 @@ int create_duration_record(statsd_datagram* datagram, duration_metric** out);
  * @arg duration - Duration metric to me added
  * @return all durations
  */
-duration_metric_collection* add_duration_record(metrics* m, duration_metric* duration);
+dict* add_duration_record(metrics* m, duration_metric* duration);
 
 /**
  * Update duration record
@@ -48,6 +48,6 @@ duration_metric_collection* add_duration_record(metrics* m, duration_metric* dur
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_duration_record(duration_metric* duration, statsd_datagram* datagram);
+int update_duration_record(metrics* m, duration_metric* duration, statsd_datagram* datagram);
 
 #endif
