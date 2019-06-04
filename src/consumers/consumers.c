@@ -103,12 +103,13 @@ void print_recorded_values(metrics* m, agent_config* config) {
     if (strlen(config->debug_output_filename) == 0) return; 
     FILE* f;
     f = fopen(config->debug_output_filename, "w+");
-    long long int record_count = 0;
-    if (f != NULL) {
-        record_count += print_counter_metric_collection(m, f);
-        record_count += print_gauge_metric_collection(m, f);
-        record_count += print_duration_metric_collection(m, f);
+    if (f == NULL) {
+        return;
     }
+    long long int record_count = 0;
+    record_count += print_counter_metric_collection(m, f);
+    record_count += print_gauge_metric_collection(m, f);
+    record_count += print_duration_metric_collection(m, f);
     fprintf(f, "Total number of records: %llu \n", record_count);
     fclose(f);
 }
