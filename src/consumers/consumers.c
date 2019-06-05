@@ -13,6 +13,7 @@
  * Flag to capture USR1 signal event, which is supposed mark request to output currently recorded data in debug file 
  */
 static int g_output_requested = 0;
+pthread_mutex_t g_output_requested_lock;
 
 /**
  * Initializes metrics struct to empty values
@@ -61,6 +62,7 @@ void* consume_datagram(void* args) {
                 break;
             default:
                 {
+                    pthread_mutex_lock(&g_output_requested_lock);
                     if (g_output_requested) {
                         verbose_log("Output of recorded values request caught.");
                         print_recorded_counters(m, config);
@@ -69,6 +71,7 @@ void* consume_datagram(void* args) {
                         verbose_log("Recorded values output.");
                         g_output_requested = 0;
                     }
+                    pthread_mutex_unlock(&g_output_requested_lock);
                 }
         }
     }
@@ -78,7 +81,9 @@ void* consume_datagram(void* args) {
  * Sets flag notifying that output was requested
  */
 void consumer_request_output() {
+    pthread_mutex_lock(&g_output_requested_lock);
     g_output_requested = 1;
+    pthread_mutex_unlock(&g_output_requested_lock);
 }
 
 /**
