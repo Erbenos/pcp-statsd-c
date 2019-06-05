@@ -7,7 +7,14 @@ make run &
 # not sure how else to it now
 sleep 3;
 
-./test/data/duration.sh
+echo "<TEST DATA SEND START>"
+# valid
+echo "VALID CASES:"
+./test/data/duration/valid.sh
+# invalid
+echo "INVALID CASES:"
+./test/data/duration/invalid.sh
+echo "<TEST DATA SEND END>"
 
 pid=$(pgrep pcp-statsd)
 kill -USR1 $pid

@@ -80,7 +80,7 @@ int sanitize_string(char *src) {
     for (i = 0; i < segment_length; i++) {
         char current_char = src[i];
         if (((int) current_char >= (int) 'a' && (int) current_char <= (int) 'z') ||
-            ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'A') ||
+            ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'Z') ||
             ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') ||
             (int) current_char == (int) '.' ||
             (int) current_char == (int) '_') {

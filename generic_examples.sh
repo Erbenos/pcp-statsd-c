@@ -10,12 +10,12 @@ sleep 3;
 echo "<TEST DATA SEND START>"
 # valid
 echo "VALID CASES:"
-./test/data/gauge/valid.sh
+./test/data/generic/valid.sh
 # invalid
 echo "INVALID CASES:"
-./test/data/gauge/invalid.sh
-echo "<TEST DATA SEND END>"
-
+./test/data/generic/invalid.sh
+echo "<TEST DATA SEND END>
+"
 pid=$(pgrep pcp-statsd)
 kill -USR1 $pid
 # I have no idea how to watch output of parallel task and block until given text is found
