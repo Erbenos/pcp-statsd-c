@@ -11,6 +11,12 @@ void init_gauge_consumer(agent_config* config);
 void process_gauge(metrics* m, statsd_datagram* datagram);
 
 /**
+ * Frees gauge metric record
+ * @arg metric - Metric to be freed
+ */
+void free_gauge_metric(gauge_metric* metric);
+
+/**
  * Writes information about recorded gauges into file
  * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
@@ -38,7 +44,7 @@ int create_gauge_record(statsd_datagram* datagram, gauge_metric** out);
  * @arg gauge - Gauge metric to me added
  * @return all gauges
  */
-gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge);
+dict* add_gauge_record(metrics* m, gauge_metric* gauge);
 
 /**
  * Update gauge record
@@ -46,6 +52,6 @@ gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge);
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram);
+int update_gauge_record(metrics* m, gauge_metric* gauge, statsd_datagram* datagram);
 
 #endif

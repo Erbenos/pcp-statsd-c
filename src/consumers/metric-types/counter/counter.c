@@ -7,7 +7,7 @@
 #include "./counter.h"
 
 void init_counter_consumer(agent_config* config) {
-
+    (void)config;
 }
 
 /**
@@ -20,7 +20,7 @@ void process_counter(metrics* m, statsd_datagram* datagram) {
     ALLOC_CHECK("Unable to allocate memory for placeholder counter record");
     *counter = (struct counter_metric) { 0 };
     if (find_counter_by_name(m, datagram->metric, &counter)) {
-        if (!update_counter_record(counter, datagram)) {
+        if (!update_counter_record(m, counter, datagram)) {
             verbose_log("Throwing away datagram, semantically incorrect values.");
             free_datagram(datagram);
         }
@@ -37,23 +37,39 @@ void process_counter(metrics* m, statsd_datagram* datagram) {
 }
 
 /**
+ * Frees counter metric record
+ * @arg metric - Metric to be freed
+ */
+void free_counter_metric(counter_metric* metric) {
+    if (metric->name != NULL) {
+        free(metric->name);
+    }
+    if (metric->meta != NULL) {
+        free_metric_metadata(metric->meta);
+    }
+    free(metric);
+}
+
+/**
  * Writes information about recorded counters into file
  * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
  */
 void print_recorded_counters(metrics* m, agent_config* config) {
-    counter_metric_collection* counters = m->counters;
     if (strlen(config->debug_output_filename) == 0) return; 
     FILE* f;
     f = fopen(config->debug_output_filename, "a+");
     if (f == NULL) {
         return;
     }
-    long long int i;
-    for (i = 0; i < counters->length; i++) {
-        fprintf(f, "%s = %llu (counter)\n", counters->values[i]->name, counters->values[i]->value);
+    dictIterator* iterator = dictGetSafeIterator(m->counters);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        counter_metric* metric = (counter_metric*)current->v.val;
+        fprintf(f, "%s = %llu (counter)\n", metric->name, metric->value);
     }
-    fprintf(f, "Total number of counter records: %lu \n", counters->length);
+    dictReleaseIterator(iterator);
+    fprintf(f, "Total number of counter records: %lu \n", m->counters->ht[0].size);
     fclose(f);
 }
 
@@ -64,15 +80,19 @@ void print_recorded_counters(metrics* m, agent_config* config) {
  * @return 1 when any found
  */
 int find_counter_by_name(metrics* m, char* name, counter_metric** out) {
-    counter_metric_collection* counters = m->counters;
-    long int i;
-    for (i = 0; i < counters->length; i++) {
-        if (strcmp(name, counters->values[i]->name) == 0) {
-            *out = counters->values[i];
-            return 1;
-        }
+    dict* counters = m->counters;
+    dictEntry* result = dictFind(counters, name);
+    if (result == NULL) {
+        return 0;
     }
-    return 0;
+    if (out != NULL) {
+        counter_metric* metric = (counter_metric*)result->v.val; 
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
+        strcpy((*out)->name, metric->name);
+        (*out)->value = metric->value;
+        copy_metric_meta((*out)->meta, metric->meta);
+    }
+    return 1;
 }
 
 /**
@@ -100,12 +120,9 @@ int create_counter_record(statsd_datagram* datagram, counter_metric** out) {
  * @arg counter - Counter metric to me added
  * @return all counters
  */
-counter_metric_collection* add_counter_record(metrics* m, counter_metric* counter) {
-    counter_metric_collection* counters = m->counters;
-    counters->values = realloc(counters->values, counters->length + 1);
-    ALLOC_CHECK("Unable to allocate memory for counter values");
-    counters->values[counters->length] = counter;
-    counters->length++;
+dict* add_counter_record(metrics* m, counter_metric* counter) {
+    dict* counters = m->counters;
+    dictAdd(counters, counter->name, counter);
     return counters;
 }
 
@@ -115,7 +132,8 @@ counter_metric_collection* add_counter_record(metrics* m, counter_metric* counte
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_counter_record(counter_metric* counter, statsd_datagram* datagram) {
+int update_counter_record(metrics* m, counter_metric* counter, statsd_datagram* datagram) {
+    dict* counters = m->counters;
     if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
     }
@@ -124,5 +142,6 @@ int update_counter_record(counter_metric* counter, statsd_datagram* datagram) {
         return 0;
     }
     counter->value += value;
+    dictReplace(counters, counter->name, counter);
     return 1;
 }

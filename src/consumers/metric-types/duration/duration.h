@@ -13,6 +13,12 @@ void init_duration_consumer(agent_config* config);
 void process_duration(metrics* m, statsd_datagram* datagram);
 
 /**
+ * Frees duration metric record
+ * @arg metric - Metric to be freed
+ */
+void free_duration_metric(duration_metric* metric);
+
+/**
  * Writes information about recorded durations into file
  * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
@@ -40,7 +46,7 @@ int create_duration_record(statsd_datagram* datagram, duration_metric** out);
  * @arg duration - Duration metric to me added
  * @return all durations
  */
-duration_metric_collection* add_duration_record(metrics* m, duration_metric* duration);
+dict* add_duration_record(metrics* m, duration_metric* duration);
 
 /**
  * Update duration record
@@ -48,6 +54,6 @@ duration_metric_collection* add_duration_record(metrics* m, duration_metric* dur
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_duration_record(duration_metric* duration, statsd_datagram* datagram);
+int update_duration_record(metrics* m, duration_metric* duration, statsd_datagram* datagram);
 
 #endif

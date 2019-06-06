@@ -15,22 +15,76 @@
 static int g_output_requested = 0;
 pthread_mutex_t g_output_requested_lock;
 
+static void counterFreeCallBack(void *privdata, void *val)
+{
+    (void)privdata;
+    free_counter_metric((counter_metric*)val);
+}
+
+static void gaugeFreeCallBack(void *privdata, void *val)
+{
+    (void)privdata;
+    free_gauge_metric((gauge_metric*)val);
+}
+
+static void durationFreeCallBack(void* privdata, void *val) {
+    (void)privdata;
+    free_duration_metric((duration_metric*)val);
+}
+
+static void * metricKeyDupCallBack(void *privdata, const void *key)
+{
+    (void)privdata;
+    char* duplicate = malloc(strlen(key));
+    strcpy(duplicate, key);
+    return duplicate;
+} 
+
+static int metricCompareCallBack(void* privdata, const void* key1, const void* key2)
+{
+    (void)privdata;
+    return strcmp((char*)key1, (char*)key2) == 0;
+}
+
+static uint64_t metricHashCallBack(const void *key)
+{
+    return dictGenHashFunction((unsigned char *)key, strlen((char *)key));
+}
+
+dictType counterDictCallBacks = {
+    .hashFunction	= metricHashCallBack,
+    .keyCompare		= metricCompareCallBack,
+    .keyDup		    = metricKeyDupCallBack,
+    .keyDestructor	= counterFreeCallBack,
+    .valDestructor	= counterFreeCallBack,
+};
+
+dictType gaugeDictCallBacks = {
+    .hashFunction	= metricHashCallBack,
+    .keyCompare		= metricCompareCallBack,
+    .keyDup		    = metricKeyDupCallBack,
+    .keyDestructor	= gaugeFreeCallBack,
+    .valDestructor	= gaugeFreeCallBack,
+};
+
+dictType durationDictCallBacks = {
+    .hashFunction   = metricHashCallBack,
+    .keyCompare     = metricCompareCallBack,
+    .keyDup         = metricKeyDupCallBack,
+    .keyDestructor  = durationFreeCallBack,
+    .valDestructor  = durationFreeCallBack,
+};
+
 /**
  * Initializes metrics struct to empty values
  * @arg config - Config (should there be need to pass detailed info into metrics)
  */
 metrics* init_metrics(agent_config* config) {
+    (void)config;
     metrics* m = (metrics*) malloc(sizeof(metrics));
-    ALLOC_CHECK("Unable to allocate memory for metrics wrapper");
-    m->counters = (counter_metric_collection*) malloc(sizeof(counter_metric_collection));
-    ALLOC_CHECK("Unable to allocate memory for counter collection");
-    m->gauges = (gauge_metric_collection*) malloc(sizeof(gauge_metric_collection));
-    ALLOC_CHECK("Unable to allocate memory for gauge collection");
-    m->durations = (duration_metric_collection*) malloc(sizeof(duration_metric_collection));
-    ALLOC_CHECK("Unable to allocate memory for duration collection");
-    *(m->counters) = (counter_metric_collection) {0}; 
-    *(m->gauges) = (gauge_metric_collection) {0}; 
-    *(m->durations) = (duration_metric_collection) {0}; 
+    m->counters = dictCreate(&counterDictCallBacks, "counters");
+    m->gauges = dictCreate(&gaugeDictCallBacks, "gauges");
+    m->durations = dictCreate(&durationDictCallBacks, "durations");
     return m;
 }
 
@@ -104,4 +158,13 @@ int check_metric_name_available(metrics* m, char* name) {
 metric_metadata* create_record_meta(statsd_datagram* datagram) {
     // TODO: this is not yet implemented
     return NULL;
+}
+
+void free_metric_metadata(metric_metadata* data) {
+    (void)data;
+}
+
+void copy_metric_meta(metric_metadata** dest, metric_metadata* src) {
+    (void)dest;
+    (void)src;
 }

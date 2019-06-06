@@ -6,9 +6,8 @@
 #include "../../consumers.h"
 #include "duration.h"
 
-// TODO: do any initialization local to duration consumer, should that be needed
 void init_duration_consumer(agent_config* config) {
-    
+    (void)config;    
 }
 
 /**
@@ -21,7 +20,7 @@ void process_duration(metrics* m, statsd_datagram* datagram) {
     ALLOC_CHECK("Unable to allocate memory for placeholder duration metric");
     *duration = (struct duration_metric) { 0 };
     if (find_histogram_by_name(m, datagram->metric, &duration)) {
-        if (!update_duration_record(duration, datagram)) {
+        if (!update_duration_record(m, duration, datagram)) {
             verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
             free_datagram(datagram);
         }
@@ -38,23 +37,39 @@ void process_duration(metrics* m, statsd_datagram* datagram) {
 }
 
 /**
+ * Frees duration metric record
+ * @arg metric - Metric to be freed
+ */
+void free_duration_metric(duration_metric* metric) {
+    if (metric->name != NULL) {
+        free(metric->name);
+    }
+    if (metric->meta != NULL) {
+        free_metric_metadata(metric->meta);
+    }
+    // cant free histogram here
+    free(metric);
+}
+
+/**
  * Writes information about recorded durations into file
  * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
  */
 void print_recorded_durations(metrics* m, agent_config* config) {
-    duration_metric_collection* durations = m->durations;
     if (strlen(config->debug_output_filename) == 0) return; 
     FILE* f;
     f = fopen(config->debug_output_filename, "a+");
     if (f == NULL) {
         return;
     }
-    long long int i;
-    for (i = 0; i < durations->length; i++) {
-        fprintf(f, "%s (duration) \n", durations->values[i]->name);
+    dictIterator* iterator = dictGetSafeIterator(m->durations);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        duration_metric* duration = (duration_metric*)current->v.val;
+        fprintf(f, "%s (duration) \n", duration->name);
         hdr_percentiles_print(
-            durations->values[i]->histogram,
+            duration->histogram,
             f,
             5,
             1.0,
@@ -62,7 +77,7 @@ void print_recorded_durations(metrics* m, agent_config* config) {
         );
         fprintf(f, "\n");
     }
-    fprintf(f, "Total number of duration records: %lu \n", durations->length);
+    fprintf(f, "Total number of duration records: %lu \n", m->durations->ht[0].size);
     fclose(f);
 }
 
@@ -73,17 +88,19 @@ void print_recorded_durations(metrics* m, agent_config* config) {
  * @return 1 when any found
  */
 int find_histogram_by_name(metrics* m, char* name, duration_metric** out) {
-    duration_metric_collection* durations = m->durations;
-    long int i;
-    for (i = 0; i < durations->length; i++) {
-        if (strcmp(name, durations->values[i]->name) == 0) {
-            if (out != NULL) {
-                *out = durations->values[i];
-            }
-            return 1;
-        }
+    dict* durations = m->durations;
+    dictEntry* result = dictFind(durations, name);
+    if (result == NULL) {
+        return 0;
     }
-    return 0;
+    if (out != NULL) {
+        duration_metric* metric = (duration_metric*)result->v.val;
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
+        strcpy((*out)->name, metric->name);
+        (*out)->histogram = metric->histogram;
+        copy_metric_meta((*out)->meta, metric->meta);
+    }
+    return 1;
 }
 
 /**
@@ -115,12 +132,9 @@ int create_duration_record(statsd_datagram* datagram, duration_metric** out) {
  * @arg duration - Duration metric to me added
  * @return all durations
  */
-duration_metric_collection* add_duration_record(metrics* m, duration_metric* duration) {
-    duration_metric_collection* durations = m->durations;
-    durations->values = realloc(durations->values, durations->length + 1);
-    ALLOC_CHECK("Unable to allocate memory for duration values");
-    durations->values[durations->length] = duration;
-    durations->length++;
+dict* add_duration_record(metrics* m, duration_metric* duration) {
+    dict* durations = m->durations;
+    dictAdd(durations, duration->name, duration);
     return durations;
 }
 
@@ -130,7 +144,8 @@ duration_metric_collection* add_duration_record(metrics* m, duration_metric* dur
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_duration_record(duration_metric* duration, statsd_datagram* datagram) {
+int update_duration_record(metrics* m, duration_metric* duration, statsd_datagram* datagram) {
+    dict* durations = m->durations;
     if (datagram->value[0] == '-' || datagram->value[0] == '+') {
         return 0;
     }
@@ -139,5 +154,6 @@ int update_duration_record(duration_metric* duration, statsd_datagram* datagram)
         return 0;
     }
     hdr_record_value(duration->histogram, value);
+    dictReplace(durations, duration->name, duration);
     return 1;
 }

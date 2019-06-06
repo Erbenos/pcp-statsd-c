@@ -1,6 +1,8 @@
 #ifndef CONSUMERS_
 #define CONSUMERS_
 
+#include "../utils/dict.h"
+
 typedef struct metric_metadata {
     tag_collection* tags;
     char* instance;
@@ -40,11 +42,10 @@ typedef struct duration_metric_collection {
     long int length;
 } duration_metric_collection;
 
-
 typedef struct metrics {
-    counter_metric_collection* counters;
-    gauge_metric_collection* gauges;
-    duration_metric_collection* durations;
+    dict* counters;
+    dict* gauges;
+    dict* durations;
 } metrics;
 
 /**
@@ -73,5 +74,9 @@ void consumer_request_output();
 int check_metric_name_available(metrics* m, char* name);
 
 metric_metadata* create_record_meta(statsd_datagram* datagram);
+
+void free_metric_metadata(metric_metadata* metadata);
+
+void copy_metric_meta(metric_metadata** dest, metric_metadata* src);
 
 #endif

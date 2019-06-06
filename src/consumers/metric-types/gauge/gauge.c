@@ -7,7 +7,7 @@
 #include "./gauge.h"
 
 void init_gauge_consumer(agent_config* config) {
-
+    (void)config;
 }
 
 /**
@@ -20,7 +20,7 @@ void process_gauge(metrics* m, statsd_datagram* datagram) {
     ALLOC_CHECK("Unable to allocate memory for placeholder gauge record");
     *gauge = (struct gauge_metric) { 0 };
     if (find_gauge_by_name(m, datagram->metric, &gauge)) {
-        if (!update_gauge_record(gauge, datagram)) {
+        if (!update_gauge_record(m, gauge, datagram)) {
             verbose_log("Thrown away. REASON: semantically incorrect values. (%s)", datagram->value);
             free_datagram(datagram);
         }
@@ -37,23 +37,39 @@ void process_gauge(metrics* m, statsd_datagram* datagram) {
 }
 
 /**
+ * Frees gauge metric record
+ * @arg metric - Metric to be freed
+ */
+void free_gauge_metric(gauge_metric* metric) {
+    if (metric->name != NULL) {
+        free(metric->name);
+    }
+    if (metric->meta != NULL) {
+        free_metric_metadata(metric->meta);
+    }
+    free(metric);
+}
+
+/**
  * Writes information about recorded gauges into file
  * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
  */
 void print_recorded_gauges(metrics* m, agent_config* config) {
-    gauge_metric_collection* gauges = m->gauges;
     if (strlen(config->debug_output_filename) == 0) return; 
     FILE* f;
     f = fopen(config->debug_output_filename, "a+");
     if (f == NULL) {
         return;
     }
-    long long int i;
-    for (i = 0; i < gauges->length; i++) {
-        fprintf(f, "%s = %lf (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
+    dictIterator* iterator = dictGetSafeIterator(m->gauges);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        gauge_metric* metric = (gauge_metric*)current->v.val;
+        fprintf(f, "%s = %f (gauge)\n", metric->name, metric->value);
     }
-    fprintf(f, "Total number of gauge records: %lu \n", gauges->length);
+    dictReleaseIterator(iterator);
+    fprintf(f, "Total number of gauge records: %lu \n", m->durations->ht[0].size);
     fclose(f);
 }
 
@@ -64,15 +80,19 @@ void print_recorded_gauges(metrics* m, agent_config* config) {
  * @return 1 when any found
  */
 int find_gauge_by_name(metrics* m, char* name, gauge_metric** out) {
-    gauge_metric_collection* gauges = m->gauges;
-    long int i;
-    for (i = 0; i < gauges->length; i++) {
-        if (strcmp(name, gauges->values[i]->name) == 0) {
-            *out = gauges->values[i];
-            return 1;
-        }
+    dict* gauges = m->gauges;
+    dictEntry* result = dictFind(gauges, name);
+    if (result == NULL) {
+        return 0;
     }
-    return 0;
+    if (out != NULL) {
+        gauge_metric* metric = (gauge_metric*)result->v.val;
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
+        strcpy((*out)->name, metric->name);
+        (*out)->value = metric->value;
+        copy_metric_meta((*out)->meta, metric->meta);
+    }
+    return 1;
 }
 
 /**
@@ -100,12 +120,9 @@ int create_gauge_record(statsd_datagram* datagram, gauge_metric** out) {
  * @arg gauge - Gauge metric to me added
  * @return all gauges
  */
-gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge) {
-    gauge_metric_collection* gauges = m->gauges;
-    gauges->values = realloc(gauges->values, gauges->length + 1);
-    ALLOC_CHECK("Unable to allocate memory for gauge values");
-    gauges->values[gauges->length] = gauge;
-    gauges->length++;
+dict* add_gauge_record(metrics* m, gauge_metric* gauge) {
+    dict* gauges = m->gauges;
+    dictAdd(gauges, gauge->name, gauge);
     return gauges;
 }
 
@@ -115,7 +132,8 @@ gauge_metric_collection* add_gauge_record(metrics* m, gauge_metric* gauge) {
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram) {
+int update_gauge_record(metrics* m, gauge_metric* gauge, statsd_datagram* datagram) {
+    dict* gauges = m->gauges;
     int substract = 0;
     int add = 0;
     if (datagram->value[0] == '+') {
@@ -144,5 +162,6 @@ int update_gauge_record(gauge_metric* gauge, statsd_datagram* datagram) {
     } else {
         gauge->value = value;
     }
+    dictReplace(gauges, gauge->name, gauge);
     return 1;
 }
