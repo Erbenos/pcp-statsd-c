@@ -3,9 +3,10 @@
 
 #include <chan/chan.h>
 
+#include "../utils/dict.h"
 #include "../config-reader/config-reader.h"
 
-typedef struct metrics metrics;
+typedef dict metrics;
 
 const int PARSER_TRIVIAL;
 const int PARSER_RAGEL;
