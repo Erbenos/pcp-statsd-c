@@ -57,12 +57,13 @@ void free_gauge_metric(gauge_metric* metric) {
  * @return Total count of counters printed
  */
 int print_gauge_metric_collection(metrics* m, FILE* out) {
-    (void)out;
-    // gauge_metric_collection* gauges = m->gauges;
-    // long int i;
-    // for (i = 0; i < gauges->length; i++) {
-    //     fprintf(out, "%s = %lli (gauge)\n", gauges->values[i]->name, gauges->values[i]->value);
-    // }
+    dictIterator* iterator = dictGetSafeIterator(m->gauges);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        gauge_metric* metric = (gauge_metric*)current->v.val;
+        fprintf(out, "%s = %lli (gauge) | key = %s\n", metric->name, metric->value, current->key);
+    }
+    dictReleaseIterator(iterator);
     return m->gauges->ht[0].size;
 }
 
@@ -73,13 +74,14 @@ int print_gauge_metric_collection(metrics* m, FILE* out) {
  * @return 1 when any found
  */
 int find_gauge_by_name(metrics* m, char* name, gauge_metric** out) {
-    dict* counters = m->counters;
-    dictEntry* result = dictFind(counters, name);
+    dict* gauges = m->gauges;
+    dictEntry* result = dictFind(gauges, name);
     if (result == NULL) {
         return 0;
     }
     if (out != NULL) {
-        counter_metric* metric = (counter_metric*)result->v.val; 
+        gauge_metric* metric = (gauge_metric*)result->v.val;
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
         strcpy((*out)->name, metric->name);
         (*out)->value = metric->value;
         copy_metric_meta((*out)->meta, metric->meta);

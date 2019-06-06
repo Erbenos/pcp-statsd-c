@@ -13,6 +13,13 @@ void init_duration_consumer(agent_config* config);
 void process_duration(metrics* m, statsd_datagram* datagram);
 
 /**
+ * Frees duration metric record
+ * @arg metric - Metric to be freed
+ */
+void free_duration_metric(duration_metric* metric);
+
+
+/**
  * Writes information about recorded histograms into file
  * @arg out - OPENED file handle
  * @return Total count of histograms printed

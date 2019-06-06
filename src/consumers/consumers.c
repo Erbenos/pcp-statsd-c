@@ -10,6 +10,11 @@
 #include "./metric-types/duration/duration.h"
 #include "./metric-types/gauge/gauge.h"
 
+/**
+ * Flag to capture USR1 signal event, which is supposed mark request to output currently recorded data in debug file 
+ */
+static int g_output_requested = 0;
+
 static void counterFreeCallBack(void *privdata, void *val)
 {
     (void)privdata;
@@ -22,20 +27,23 @@ static void gaugeFreeCallBack(void *privdata, void *val)
     free_gauge_metric((gauge_metric*)val);
 }
 
-static void * metricDupCallBack(void *privdata, const void *key)
+static void durationFreeCallBack(void* privdata, void *val) {
+    (void)privdata;
+    free_duration_metric((duration_metric*)val);
+}
+
+static void * metricKeyDupCallBack(void *privdata, const void *key)
 {
     (void)privdata;
-    if (key == NULL) return NULL;
-}
+    char* duplicate = malloc(strlen(key));
+    strcpy(duplicate, key);
+    return duplicate;
+} 
 
 static int metricCompareCallBack(void* privdata, const void* key1, const void* key2)
 {
-    int	l1, l2;
     (void)privdata;
-    l1 = strlen((char *)key1);
-    l2 = strlen((char *)key2);
-    if (l1 != l2) return 0;
-    return memcmp(key1, key2, l1) == 0;
+    return strcmp((char*)key1, (char*)key2) == 0;
 }
 
 static uint64_t metricHashCallBack(const void *key)
@@ -46,7 +54,7 @@ static uint64_t metricHashCallBack(const void *key)
 dictType counterDictCallBacks = {
     .hashFunction	= metricHashCallBack,
     .keyCompare		= metricCompareCallBack,
-    .keyDup		    = metricDupCallBack,
+    .keyDup		    = metricKeyDupCallBack,
     .keyDestructor	= counterFreeCallBack,
     .valDestructor	= counterFreeCallBack,
 };
@@ -54,15 +62,18 @@ dictType counterDictCallBacks = {
 dictType gaugeDictCallBacks = {
     .hashFunction	= metricHashCallBack,
     .keyCompare		= metricCompareCallBack,
-    .keyDup		    = metricDupCallBack,
+    .keyDup		    = metricKeyDupCallBack,
     .keyDestructor	= gaugeFreeCallBack,
     .valDestructor	= gaugeFreeCallBack,
 };
 
-/**
- * Flag to capture USR1 signal event, which is supposed mark request to output currently recorded data in debug file 
- */
-static int g_output_requested = 0;
+dictType durationDictCallBacks = {
+    .hashFunction   = metricHashCallBack,
+    .keyCompare     = metricCompareCallBack,
+    .keyDup         = metricKeyDupCallBack,
+    .keyDestructor  = durationFreeCallBack,
+    .valDestructor  = durationFreeCallBack,
+};
 
 /**
  * Initializes metrics struct to empty values
@@ -73,7 +84,7 @@ metrics* init_metrics(agent_config* config) {
     metrics* m = (metrics*) malloc(sizeof(metrics));
     m->counters = dictCreate(&counterDictCallBacks, "counters");
     m->gauges = dictCreate(&gaugeDictCallBacks, "gauges");
-    m->durations = NULL;
+    m->durations = dictCreate(&durationDictCallBacks, "durations");
     return m;
 }
 
@@ -161,6 +172,10 @@ metric_metadata* create_record_meta(statsd_datagram* datagram) {
     // TODO: this is not yet implemented
     (void)datagram;
     return NULL;
+}
+
+void free_metric_metadata(metric_metadata* data) {
+    (void)data;
 }
 
 void copy_metric_meta(metric_metadata** dest, metric_metadata* src) {

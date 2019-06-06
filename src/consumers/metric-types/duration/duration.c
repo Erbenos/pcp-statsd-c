@@ -38,17 +38,17 @@ void process_duration(metrics* m, statsd_datagram* datagram) {
 }
 
 /**
- * Frees counter metric record
+ * Frees duration metric record
  * @arg metric - Metric to be freed
  */
-void free_counter_metric(duration_metric* metric) {
+void free_duration_metric(duration_metric* metric) {
     if (metric->name != NULL) {
         free(metric->name);
     }
     if (metric->meta != NULL) {
         free_metric_metadata(metric->meta);
     }
-    free(metric->histogram);
+    // cant free histogram here
     free(metric);
 }
 
@@ -59,13 +59,13 @@ void free_counter_metric(duration_metric* metric) {
  */
 int print_duration_metric_collection(metrics* m, FILE* out) {
     (void)out;
-    /*
-    duration_metric_collection* durations = m->durations;
-    long int i;
-    for (i = 0; i < durations->length; i++) {
-        fprintf(out, "%s (duration) \n", durations->values[i]->name);
+    dictIterator* iterator = dictGetSafeIterator(m->durations);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        duration_metric* duration = (duration_metric*)current->v.val;
+        fprintf(out, "%s (duration) \n", duration->name);
         hdr_percentiles_print(
-            durations->values[i]->histogram,
+            duration->histogram,
             out,
             5,
             1.0,
@@ -73,7 +73,6 @@ int print_duration_metric_collection(metrics* m, FILE* out) {
         );
         fprintf(out, "\n");
     }
-    */
     return m->durations->ht[0].size;
 }
 
@@ -90,7 +89,8 @@ int find_histogram_by_name(metrics* m, char* name, duration_metric** out) {
         return 0;
     }
     if (out != NULL) {
-        duration_metric* metric = (duration_metric*)result->v.val; 
+        duration_metric* metric = (duration_metric*)result->v.val;
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
         strcpy((*out)->name, metric->name);
         (*out)->histogram = metric->histogram;
         copy_metric_meta((*out)->meta, metric->meta);

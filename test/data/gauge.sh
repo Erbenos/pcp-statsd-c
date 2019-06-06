@@ -23,12 +23,12 @@ echo "logout:2|g"   | call_endpoint
 ############################
 # Add and decrement cases
 
-echo "success:0|g"      | call_endpoint
+echo "success:1|g"      | call_endpoint
 echo "success:+5|g"     | call_endpoint
 echo "success:-12|g"    | call_endpoint
-echo "error:0|g"        | call_endpoint
+echo "error:3|g"        | call_endpoint
 echo "error:+9|g"       | call_endpoint
-echo "error:-0|g"       | call_endpoint
+echo "error:-4|g"       | call_endpoint
 
 ## Results:
 ## success = -7 

@@ -56,14 +56,13 @@ void free_counter_metric(counter_metric* metric) {
  * @return Total count of counters printed
  */
 int print_counter_metric_collection(metrics* m, FILE* out) {
-    (void)out;
-    /*
-    counter_metric_collection* counters = m->counters;
-    long int i;
-    for (i = 0; i < counters->length; i++) {
-        fprintf(out, "%s = %llu (counter)\n", counters->values[i]->name, counters->values[i]->value);
+    dictIterator* iterator = dictGetSafeIterator(m->counters);
+    dictEntry* current;
+    while ((current = dictNext(iterator)) != NULL) {
+        counter_metric* metric = (counter_metric*)current->v.val;
+        fprintf(out, "%s = %llu (duration) | key = %s\n", metric->name, metric->value, current->key);
     }
-    */
+    dictReleaseIterator(iterator);
     return m->counters->ht[0].size;
 }
 
@@ -81,6 +80,7 @@ int find_counter_by_name(metrics* m, char* name, counter_metric** out) {
     }
     if (out != NULL) {
         counter_metric* metric = (counter_metric*)result->v.val; 
+        (*out)->name = malloc(sizeof(char) * (strlen(metric->name)));
         strcpy((*out)->name, metric->name);
         (*out)->value = metric->value;
         copy_metric_meta((*out)->meta, metric->meta);
