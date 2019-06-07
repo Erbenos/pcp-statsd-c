@@ -121,14 +121,24 @@ void print_out_datagram_tags(tag_collection* collection) {
 }
 
 void free_datagram(statsd_datagram* datagram) {
-    free(datagram->metric);
-    free(datagram->instance);
+    if (datagram->metric != NULL) {
+        free(datagram->metric);
+    }
+    if (datagram->instance != NULL) {
+        free(datagram->instance);
+    }
     if (datagram->tags != NULL) {
         free_datagram_tags(datagram->tags);
     }
-    free(datagram->type);
-    free(datagram->sampling);
-    free(datagram);
+    if (datagram->type != NULL) {
+        free(datagram->type);
+    }
+    if (datagram->sampling != NULL) {
+        free(datagram->sampling);
+    }
+    if (datagram != NULL) {
+        free(datagram);
+    }
 }
 
 void free_datagram_tags(tag_collection* tags) {

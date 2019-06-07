@@ -67,9 +67,8 @@ void* consume_datagram(void* args) {
     chan_t* parsed = ((consumer_args*)args)->parsed_datagrams;
     agent_config* config = ((consumer_args*)args)->config;
     metrics* m = ((consumer_args*)args)->metrics_wrapper;
-    statsd_datagram* datagram = (statsd_datagram*) malloc(sizeof(statsd_datagram));
+    statsd_datagram *datagram = (statsd_datagram*) malloc(sizeof(statsd_datagram));
     while(1) {
-        *datagram = (statsd_datagram) { 0 };
         switch(chan_select(&parsed, 1, (void *)&datagram, NULL, 0, NULL)) {
             case 0:
                 process_datagram(m, datagram);
@@ -118,7 +117,7 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
             verbose_log("Throwing away datagram, semantically incorrect values.");
         }
     } else {
-        int name_available = check_metric_name_available(m, datagram->metric);
+        int name_available = check_metric_name_available(m, key);
         if (name_available) {
             int correct_semantics = create_metric(datagram, &item);
             if (correct_semantics) {
@@ -400,6 +399,7 @@ int check_metric_name_available(metrics* m, char* name) {
  * @return metric metadata
  */
 metric_metadata* create_metric_meta(statsd_datagram* datagram) {
+    (void)datagram;
     // TODO: this is not yet implemented
     return NULL;
 }
