@@ -87,6 +87,7 @@ void* consume_datagram(void* args) {
                 }
         }
     }
+    free_datagram(datagram);
 }
 
 /**
@@ -107,7 +108,9 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
     metric* item = (struct metric*) malloc(sizeof(metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder metric.");
     *item = (struct metric) { 0 };
-    int metric_exists = find_metric_by_name(m, datagram->metric, &item);
+    char* key = malloc(snprintf(NULL, 0, "%s&%s", datagram->metric, datagram->type) + 1);
+    sprintf(key, "%s&%s", datagram->metric, datagram->type);
+    int metric_exists = find_metric_by_name(m, key, &item);
     if (metric_exists) {
         int res = update_metric(item, datagram);
         if (res == 0) {
@@ -119,7 +122,7 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
         if (name_available) {
             int correct_semantics = create_metric(datagram, &item);
             if (correct_semantics) {
-                save_metric(m, item);
+                save_metric(m, key, item);
             } else {
                 free_metric(item);
                 verbose_log("Throwing away datagram, semantically incorrect values.");
@@ -141,20 +144,20 @@ void free_metric(metric* item) {
         free_metric_metadata(item->meta);
     }
     if (item->type != NULL) {
+        switch (*(item->type)) {
+            case COUNTER:
+            case GAUGE:
+                if (item->value != NULL) {
+                    free(item->value);
+                }
+                break;
+            case DURATION:
+                if (item->value != NULL) {
+                    hdr_close((struct hdr_histogram*)item->value);
+                }
+                break;
+        }
         free(item->type);
-    }
-    switch (*(item->type)) {
-        case COUNTER:
-        case GAUGE:
-            if (item->value != NULL) {
-                free(item->value);
-            }
-            break;
-        case DURATION:
-            if (item->value != NULL) {
-                hdr_close((struct hdr_histogram*)item->value);
-            }
-            break;
     }
     if (item != NULL) {
         free(item);
@@ -183,7 +186,7 @@ void print_metrics(metrics* m, agent_config* config) {
                 fprintf(f, "%s = %llu (counter)\n", item->name, *(unsigned long long int*)(item->value));
                 break;
             case GAUGE:
-                fprintf(f, "%s = %f (counter)\n", item->name, *(double*)(item->value));
+                fprintf(f, "%s = %f (gauge)\n", item->name, *(double*)(item->value));
                 break;
             case DURATION:
                 fprintf(f, "%s (duration) \n", item->name);
@@ -300,8 +303,8 @@ int create_metric(statsd_datagram* datagram, metric** out) {
  * @arg gauge - Gauge metric to me added
  * @return all gauges
  */
-void save_metric(metrics* m, metric* item) {
-    dictAdd(m, item->name, item);
+void save_metric(metrics* m, char* key, metric* item) {
+    dictAdd(m, key, item);
 }
 
 static int update_counter_metric(metric* item, statsd_datagram* datagram) {

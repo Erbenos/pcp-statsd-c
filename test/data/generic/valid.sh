@@ -5,6 +5,8 @@ call_endpoint() {
 }
 
 i=0
+echo "example:1|g" | call_endpoint
+echo "example:2|c" | call_endpoint
 
 echo "example:$i|g" | call_endpoint
 echo "example:-$i|g" | call_endpoint

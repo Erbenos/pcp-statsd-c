@@ -77,7 +77,7 @@ int create_metric(statsd_datagram* datagram, metric** out);
  * Adds metric to hashtable
  * @arg counter - Metric to be saved
  */
-void save_metric(metrics* m, metric* item);
+void save_metric(metrics* m, char* key, metric* item);
 
 /**
  * Updates counter record
