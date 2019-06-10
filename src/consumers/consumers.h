@@ -4,7 +4,7 @@
 #include "../utils/dict.h"
 
 typedef struct metric_metadata {
-    tag_collection* tags;
+    char* tags;
     char* instance;
     char* sampling;
 } metric_metadata;
@@ -77,7 +77,7 @@ int create_metric(statsd_datagram* datagram, metric** out);
  * Adds metric to hashtable
  * @arg counter - Metric to be saved
  */
-void save_metric(metrics* m, char* key, metric* item);
+void add_metric(metrics* m, char* key, metric* item);
 
 /**
  * Updates counter record
@@ -106,9 +106,6 @@ metric_metadata* create_metric_meta(statsd_datagram* datagram);
  * Frees metric metadata
  * @arg metadata - Metadata to be freed
  */ 
-void free_metric_metadata(metric_metadata* metadata);
-
-
-void copy_metric_meta(metric_metadata** dest, metric_metadata* src);
+void free_metric_metadata(metric_metadata* meta);
 
 #endif

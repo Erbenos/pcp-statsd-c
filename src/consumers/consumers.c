@@ -98,6 +98,33 @@ void consumer_request_output() {
     pthread_mutex_unlock(&g_output_requested_lock);
 }
 
+static char* create_metric_dict_key(statsd_datagram* datagram) {
+    int key_size = snprintf(
+        NULL,
+        0,
+        "%s&%s&%s&%s",
+        datagram->metric,
+        datagram->tags != NULL ? datagram->tags : "-",
+        datagram->instance != NULL ? datagram->instance : "-",
+        datagram->type
+    );
+    if (key_size > 4095) {
+        return NULL;
+    }
+    char* result = malloc(key_size + 1);
+    ALLOC_CHECK("Unable to allocate memory for hashtable key");
+    snprintf(
+        result,
+        4096,
+        "%s&%s&%s&%s",
+        datagram->metric,
+        datagram->tags != NULL ? datagram->tags : "-",
+        datagram->instance != NULL ? datagram->instance : "-",
+        datagram->type
+    );
+    return result;
+}
+
 /**
  * Processes datagram struct into metric 
  * @arg m - Metrics struct acting as metrics wrapper
@@ -107,8 +134,11 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
     metric* item = (struct metric*) malloc(sizeof(metric));
     ALLOC_CHECK("Unable to allocate memory for placeholder metric.");
     *item = (struct metric) { 0 };
-    char* key = malloc(snprintf(NULL, 0, "%s&%s", datagram->metric, datagram->type) + 1);
-    sprintf(key, "%s&%s", datagram->metric, datagram->type);
+    char* key = create_metric_dict_key(datagram);
+    if (key == NULL) {
+        free(item);
+        verbose_log("Throwing away datagram, unable to create hashtable key for metric record.");
+    }
     int metric_exists = find_metric_by_name(m, key, &item);
     if (metric_exists) {
         int res = update_metric(item, datagram);
@@ -121,14 +151,13 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
         if (name_available) {
             int correct_semantics = create_metric(datagram, &item);
             if (correct_semantics) {
-                save_metric(m, key, item);
+                add_metric(m, key, item);
             } else {
                 free_metric(item);
                 verbose_log("Throwing away datagram, semantically incorrect values.");
             }
         }
     }
-    // TODO: I SHOULD FREE DATAGRAM HERE BUT THERE SEEMS TO BE AN ISSUE WITH IT, FIND OUT WHY
 }
 
 /**
@@ -163,6 +192,21 @@ void free_metric(metric* item) {
     }
 }
 
+
+static void print_metric_meta(FILE* f, metric_metadata* meta) {
+    if (meta != NULL) {
+        if (meta->tags != NULL) {
+            fprintf(f, "tags = %s\n", meta->tags);
+        }
+        if (meta->sampling != NULL) {
+            fprintf(f, "sampling = %s\n", meta->sampling);
+        }
+        if (meta->instance != NULL) {
+            fprintf(f, "instance = %s\n", meta->instance);
+        }
+    }
+}
+
 /**
  * Writes information about recorded metrics into file
  * @arg m - Metrics struct (what values to print)
@@ -182,13 +226,22 @@ void print_metrics(metrics* m, agent_config* config) {
         metric* item = (metric*)current->v.val;
         switch (*(item->type)) {
             case COUNTER:
-                fprintf(f, "%s = %llu (counter)\n", item->name, *(unsigned long long int*)(item->value));
+                fprintf(f, "-----------------\n");
+                fprintf(f, "name = %s\n", item->name);
+                fprintf(f, "value = %llu (counter)\n", *(unsigned long long int*)(item->value));
+                print_metric_meta(f, item->meta);
                 break;
             case GAUGE:
-                fprintf(f, "%s = %f (gauge)\n", item->name, *(double*)(item->value));
+                fprintf(f, "-----------------\n");
+                fprintf(f, "name = %s\n", item->name);
+                fprintf(f, "value = %f (gauge)\n", *(double*)(item->value));
+                print_metric_meta(f, item->meta);
                 break;
             case DURATION:
-                fprintf(f, "%s (duration) \n", item->name);
+                fprintf(f, "-----------------\n");
+                fprintf(f, "name = %s\n", item->name);
+                fprintf(f, "value = (duration)\n");
+                print_metric_meta(f, item->meta);
                 hdr_percentiles_print(
                     item->value,
                     f,
@@ -201,6 +254,7 @@ void print_metrics(metrics* m, agent_config* config) {
         count++;
     }
     dictReleaseIterator(iterator);
+    fprintf(f, "-----------------\n");
     fprintf(f, "Total number of records: %lu \n", count);
     fclose(f);
 }
@@ -302,7 +356,7 @@ int create_metric(statsd_datagram* datagram, metric** out) {
  * @arg gauge - Gauge metric to me added
  * @return all gauges
  */
-void save_metric(metrics* m, char* key, metric* item) {
+void add_metric(metrics* m, char* key, metric* item) {
     dictAdd(m, key, item);
 }
 
@@ -399,20 +453,42 @@ int check_metric_name_available(metrics* m, char* name) {
  * @return metric metadata
  */
 metric_metadata* create_metric_meta(statsd_datagram* datagram) {
-    (void)datagram;
-    // TODO: this is not yet implemented
-    return NULL;
+    if (datagram->sampling == NULL && datagram->tags == NULL && datagram->instance == NULL) {
+        return NULL;
+    }
+    metric_metadata* meta = (metric_metadata*) malloc(sizeof(metric_metadata));
+    *meta = (metric_metadata) { 0 };
+    if (datagram->sampling != NULL) {
+        meta->sampling = (char*) malloc(strlen(datagram->sampling) + 1);
+        memcpy(meta->sampling, datagram->sampling, strlen(datagram->sampling) + 1);
+    }
+    if (datagram->tags != NULL) {
+        meta->tags = (char*) malloc(strlen(datagram->tags) + 1);
+        memcpy(meta->tags, datagram->tags, strlen(datagram->tags) + 1);
+    }
+    if (datagram->instance != NULL) {
+        meta->instance = (char*) malloc(strlen(datagram->instance) + 1);
+        memcpy(meta->instance, datagram->instance, strlen(datagram->instance) + 1);
+    }
+    return meta;
 }
 
 /**
  * Frees metric metadata
  * @arg metadata - Metadata to be freed
  */ 
-void free_metric_metadata(metric_metadata* data) {
-    (void)data;
+void free_metric_metadata(metric_metadata* meta) {
+    if (meta->sampling != NULL) {
+        free(meta->sampling);
+    }
+    if (meta->tags != NULL) {
+        free(meta->tags);
+    }
+    if (meta->instance != NULL) {
+        free(meta->instance);
+    }
+    if (meta != NULL) {
+        free(meta);
+    }
 }
 
-void copy_metric_meta(metric_metadata** dest, metric_metadata* src) {
-    (void)dest;
-    (void)src;
-}

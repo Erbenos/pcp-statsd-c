@@ -103,21 +103,11 @@ void print_out_datagram(statsd_datagram* datagram) {
     printf("DATAGRAM: \n");
     printf("metric: %s \n", datagram->metric);
     printf("instance: %s \n", datagram->instance);
-    if (datagram->tags != NULL) {
-        print_out_datagram_tags(datagram->tags);
-    }
+    printf("tags: %s \n", datagram->tags);
     printf("value: %s \n", datagram->value);
     printf("type: %s \n", datagram->type);
     printf("sampling: %s \n", datagram->sampling);
     printf("------------------------------ \n");
-}
-
-void print_out_datagram_tags(tag_collection* collection) {
-    printf("tags: \n");
-    int i;
-    for (i = 0; i < collection->length; i++) {
-        printf("\t %s: %s \n", collection->values[i]->key, collection->values[i]->value);
-    }
 }
 
 void free_datagram(statsd_datagram* datagram) {
@@ -128,7 +118,7 @@ void free_datagram(statsd_datagram* datagram) {
         free(datagram->instance);
     }
     if (datagram->tags != NULL) {
-        free_datagram_tags(datagram->tags);
+        free(datagram->tags);
     }
     if (datagram->type != NULL) {
         free(datagram->type);
@@ -139,16 +129,6 @@ void free_datagram(statsd_datagram* datagram) {
     if (datagram != NULL) {
         free(datagram);
     }
-}
-
-void free_datagram_tags(tag_collection* tags) {
-    int i;
-    for (i = 0; i < tags->length; i++) {
-        free(tags->values[i]->key);
-        free(tags->values[i]->value);
-    }
-    free(tags->values);
-    free(tags);
 }
 
 void* statsd_parser_consume(void* args) {
