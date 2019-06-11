@@ -2,6 +2,7 @@
 #include <string.h>
 #include <chan/chan.h>
 #include <hdr/hdr_histogram.h>
+#include <float.h>
 
 #include "../../statsd-parsers/statsd-parsers.h"
 #include "../../utils/utils.h"
@@ -143,7 +144,6 @@ void process_datagram(metrics* m, statsd_datagram* datagram) {
     if (metric_exists) {
         int res = update_metric(item, datagram);
         if (res == 0) {
-            free_metric(item);
             verbose_log("Throwing away datagram, semantically incorrect values.");
         }
     } else {
@@ -391,11 +391,14 @@ static int update_gauge_metric(metric* item, statsd_datagram* datagram) {
     if (errno == ERANGE) {
         return 0;
     }
+    double old_value = *(double*)(item->value);
     if (add || substract) {
         if (add) {
+            if (old_value + value >= DBL_MAX) return 0;
             *(double*)(item->value) += value;
         }
         if (substract) {
+            if (old_value - value <= DBL_MIN) return 0;
             *(double*)(item->value) -= value;
         }
     } else {
