@@ -1,8 +1,10 @@
-#include "config-reader.h"
-#include "../utils/utils.h"
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "config-reader.h"
+#include "../utils/utils.h"
+#include "../utils/ini.h"
 
 /**
  * Flags for available config source
@@ -54,66 +56,59 @@ agent_config* read_agent_config(int src_flag, char* config_path, int argc, char 
     return config;
 }
 
+static int ini_line_handler(void* user, const char* section, const char* name, const char* value) {
+    agent_config* dest = *(agent_config**) user;
+    size_t length = strlen(value) + 1; 
+    #define MATCH(x) strcmp(x, name) == 0
+    if (MATCH("max_udp_packet_size")) {
+        dest->max_udp_packet_size = strtoull(value, NULL, 10);
+    } else if (MATCH("tcp_address")) {
+        dest->tcp_address = (char*) malloc(length);
+        ALLOC_CHECK("Unable to assign memory for config tcp address.");
+        memcpy(dest->tcp_address, value, length);
+    } else if (MATCH("port")) {
+        dest->port = (char*) malloc(length);
+        ALLOC_CHECK("Unable to allocate memory for config port number.");
+        memcpy(dest->port, value, length);
+    } else if (MATCH("verbose")) {
+        dest->verbose = atoi(value);
+    } else if (MATCH("debug")) {
+        dest->debug = atoi(value);
+    } else if (MATCH("debug_output_filename")) {
+        dest->debug_output_filename = (char*) malloc(length);
+        ALLOC_CHECK("Unable to asssing memory for config debug_output_filename");
+        memcpy(dest->debug_output_filename, value, length);
+    } else if (MATCH("version")) {
+        dest->show_version = atoi(value);
+    } else if (MATCH("trace")) {
+        dest->trace = atoi(value);
+    } else if (MATCH("parser_type")) {
+        dest->parser_type = atoi(value);
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 /**
  * Reads program config from given path
  * @arg agent_config - Placeholder config to write what was read to
  * @arg path - Path to read file from
  */
 void read_agent_config_file(agent_config** dest, char* path) {
-    char line_buffer[256];
-    int line_index = 0;
     if (access(path, F_OK) == -1) {
         die(__LINE__, "No config file found on given path");
     }
-    FILE *config = fopen(path, "r");
-    char* option = (char *) malloc(256);
-    ALLOC_CHECK("Unable to assign memory for parsing options file.");
-    char* value = (char *) malloc(256);
-    ALLOC_CHECK("Unable to assing memory fo parsing options files.");
-    const char MAX_UDP_PACKET_SIZE_OPTION[] = "max_udp_packet_size";
-    const char PORT_OPTION[] = "port";
-    const char TCP_ADDRESS_OPTION[] = "tcp_address";
-    const char VERSION_OPTION[] = "version";
-    const char VERBOSE_OPTION[] = "verbose";
-    const char TRACE_OPTION[] = "trace";
-    const char DEBUG_OPTION[] = "debug";
-    const char DEBUG_OUTPUT_FILENAME[] = "debug_output_filename";
-    const char PARSER_TYPE_OPTION[] = "parser_type";
-    while (fgets(line_buffer, 256, config) != NULL) {
-        if (sscanf(line_buffer, "%s %s", option, value) != 2) {
-            die(__LINE__, "Syntax error in config file on line %d", line_index + 1);
-        }
-        if (strcmp(option, MAX_UDP_PACKET_SIZE_OPTION) == 0) {
-            (*dest)->max_udp_packet_size = strtoull(value, NULL, 10);
-        } else if (strcmp(option, PORT_OPTION) == 0) {
-            (*dest)->port = (char *) malloc(strlen(value));
-            ALLOC_CHECK("Unable to assign memory for port number.");
-            strncat((*dest)->port, value, strlen(value));
-        } else if (strcmp(option, TCP_ADDRESS_OPTION) == 0) {
-            (*dest)->tcp_address = (char *) malloc(strlen(value));
-            ALLOC_CHECK("Unable to assign memory for tcp address.");
-            strncat((*dest)->tcp_address, value, strlen(value));
-        } else if (strcmp(option, VERBOSE_OPTION) == 0) {
-            (*dest)->verbose = atoi(value);
-        } else if (strcmp(option, DEBUG_OPTION) == 0) {
-            (*dest)->debug = atoi(value);
-        } else if (strcmp(option, DEBUG_OUTPUT_FILENAME) == 0) {
-            (*dest)->debug_output_filename = (char *) malloc(strlen(value));
-            ALLOC_CHECK("Unable to assign memory for debug output path.");
-            strncat((*dest)->debug_output_filename, value, strlen(value));
-        } else if (strcmp(option, VERSION_OPTION) == 0) {
-            (*dest)->show_version = atoi(value);
-        } else if (strcmp(option, TRACE_OPTION) == 0) {
-            (*dest)->trace = atoi(value);
-        } else if (strcmp(option, PARSER_TYPE_OPTION) == 0) {
-            (*dest)->parser_type = atoi(value);
-        }
-        line_index++;
-        memset(option, '\0', 256);
-        memset(value, '\0', 256);
+    FILE* config = fopen(path, "r");
+    if (config == NULL) {
+        die(__LINE__, "Unable to read file.");
     }
-    free(value);
-    free(option);
+    if (ini_parse_file(config, ini_line_handler, dest) < 0) {
+        die(__LINE__, "Can't load config file");
+        fclose(config);
+        return;
+    }
+    verbose_log("Config loaded from %s.", path);
     fclose(config);
 }
 
