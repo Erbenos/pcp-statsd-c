@@ -132,13 +132,11 @@ static char* create_metric_dict_key(statsd_datagram* datagram) {
  * @arg datagram - Datagram to be processed
  */
 void process_datagram(metrics* m, statsd_datagram* datagram) {
-    metric* item = (struct metric*) malloc(sizeof(metric));
-    ALLOC_CHECK("Unable to allocate memory for placeholder metric.");
-    *item = (struct metric) { 0 };
+    metric* item;
     char* key = create_metric_dict_key(datagram);
     if (key == NULL) {
-        free(item);
         verbose_log("Throwing away datagram, unable to create hashtable key for metric record.");
+        return;
     }
     int metric_exists = find_metric_by_name(m, key, &item);
     if (metric_exists) {
@@ -341,6 +339,9 @@ static int create_counter_metric(statsd_datagram* datagram, metric** out) {
  * @return 1 on success
  */
 int create_metric(statsd_datagram* datagram, metric** out) {
+    metric* item = (struct metric*) malloc(sizeof(metric));
+    ALLOC_CHECK("Unable to allocate memory for metric.");
+    *out = item;
     if (strcmp(datagram->type, "ms") == 0) {
         return create_duration_metric(datagram, out);
     } else if (strcmp(datagram->type, "c") == 0) {
