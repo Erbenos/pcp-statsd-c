@@ -35,7 +35,7 @@ static int metricCompareCallBack(void* privdata, const void* key1, const void* k
 
 static uint64_t metricHashCallBack(const void *key)
 {
-    return dictGenHashFunction((unsigned char *)key, strlen((char *)key));
+    return dictGenCaseHashFunction((unsigned char *)key, strlen((char *)key));
 }
 
 /**
