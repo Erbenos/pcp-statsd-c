@@ -9,7 +9,11 @@ typedef struct metric_metadata {
     char* sampling;
 } metric_metadata;
 
-typedef enum { COUNTER = 0b001, GAUGE = 0b010, DURATION = 0b100 } METRIC_TYPE;
+typedef enum METRIC_TYPE { 
+    COUNTER = 0b001,
+    GAUGE = 0b010,
+    DURATION = 0b100
+} METRIC_TYPE;
 
 typedef struct metric {
     char* name;
@@ -39,10 +43,11 @@ void consumer_request_output();
 
 /**
  * Processes datagram struct into metric 
+ * @arg config - Agent config
  * @arg m - Metrics struct acting as metrics wrapper
  * @arg datagram - Datagram to be processed
  */
-void process_datagram(metrics* m, statsd_datagram* datagram);
+void process_datagram(agent_config* config, metrics* m, statsd_datagram* datagram);
 
 /**
  * Frees metric
@@ -52,10 +57,10 @@ void free_metric(metric* metric);
 
 /**
  * Writes information about recorded metrics into file
- * @arg m - Metrics struct (what values to print)
  * @arg config - Config containing information about where to output
+ * @arg m - Metrics struct (what values to print)
  */
-void print_metrics(metrics* m, agent_config* config);
+void print_metrics(agent_config* config, metrics* m);
 
 /**
  * Finds metric by name
@@ -67,11 +72,12 @@ int find_metric_by_name(metrics* m, char* name, metric** out);
 
 /**
  * Creates metric
+ * @arg config - Agent config
  * @arg datagram - Datagram with data that should populate new metric
  * @arg out - Placeholder metric
  * @return 1 on success
  */
-int create_metric(statsd_datagram* datagram, metric** out);
+int create_metric(agent_config* config, statsd_datagram* datagram, metric** out);
 
 /**
  * Adds metric to hashtable
@@ -81,11 +87,12 @@ void add_metric(metrics* m, char* key, metric* item);
 
 /**
  * Updates counter record
+ * @arg config - Agent config
  * @arg counter - Metric to be updated
  * @arg datagram - Data with which to update
  * @return 1 on success
  */
-int update_metric(metric* item, statsd_datagram* datagram);
+int update_metric(agent_config* config, metric* item, statsd_datagram* datagram);
 
 /**
  * Checks if given metric name is available (it isn't recorded yet)
@@ -107,5 +114,58 @@ metric_metadata* create_metric_meta(statsd_datagram* datagram);
  * @arg metadata - Metadata to be freed
  */ 
 void free_metric_metadata(metric_metadata* meta);
+
+/**
+ * Represents basic duration aggregation unit
+ */
+typedef struct bduration_collection {
+    double** values;
+    long int length;
+} bduration_collection;
+
+/**
+ * Collection of metadata of some duration collection 
+ */
+typedef struct duration_values_meta {
+    double min;
+    double max;
+    double median;
+    double average;
+    double percentile90;
+    double percentile95;
+    double percentile99;
+    double count;
+    double std_deviation;
+} duration_values_meta;
+
+/**
+ * Adds item to duration collection, no ordering happens on add
+ * @arg collection - Collection to which value should be added
+ * @arg value - New value
+ */
+void add_bduration_item(bduration_collection* collection, double value);
+
+/**
+ * Removes item from duration collection
+ * @arg collection - Target collection
+ * @arg value - Value to be removed, assuming primitive type
+ * @return 0 on success
+ */
+int remove_bduration_item(bduration_collection* collection, double value);
+
+/**
+ * Prints duration collection metadata in human readable way
+ * @arg f - Opened file handle, doesn't close it when finished
+ * @arg collection - Target collection
+ */
+void print_bdurations(FILE* f, bduration_collection* collection);
+
+/**
+ * Gets duration values meta data from given collection, as a sideeffect it sorts the values
+ * @arg collection - Target collection
+ * @arg out - Placeholder for data population
+ * @return 1 on success
+ */
+int get_bduration_values_meta(bduration_collection* collection, duration_values_meta* out);
 
 #endif

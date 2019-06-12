@@ -13,12 +13,6 @@
 #define READ_FROM_CMD 1
 
 /**
- * Flags for available parser types
- */
-#define PARSER_TRIVIAL 0
-#define PARSER_RAGEL 1
-
-/**
  * Returns default program config
  */
 static agent_config* get_default_config() {
@@ -33,7 +27,8 @@ static agent_config* get_default_config() {
     config->show_version = 0;
     config->port = (char *) "8125";
     config->tcp_address = (char *) "0.0.0.0";
-    config->parser_type = PARSER_TRIVIAL;
+    config->parser_type = TRIVIAL;
+    config->duration_aggregation_type = HDR_HISTOGRAM; 
     return config;
 }
 
@@ -46,7 +41,7 @@ static agent_config* get_default_config() {
 agent_config* read_agent_config(int src_flag, char* config_path, int argc, char **argv) {
     agent_config* config = get_default_config();
     if (!(src_flag == READ_FROM_CMD || src_flag == READ_FROM_FILE)) {
-        die(__LINE__, "Incorrect source flag for agent_config source.");
+        die(__FILE__, __LINE__, "Incorrect source flag for agent_config source.");
     }
     if (src_flag == READ_FROM_FILE) {
         read_agent_config_file(&config, config_path);
@@ -84,6 +79,8 @@ static int ini_line_handler(void* user, const char* section, const char* name, c
         dest->trace = atoi(value);
     } else if (MATCH("parser_type")) {
         dest->parser_type = atoi(value);
+    } else if (MATCH("duration_aggregation_type")) {
+        dest->duration_aggregation_type = atoi(value);
     } else {
         return 0;
     }
@@ -97,14 +94,14 @@ static int ini_line_handler(void* user, const char* section, const char* name, c
  */
 void read_agent_config_file(agent_config** dest, char* path) {
     if (access(path, F_OK) == -1) {
-        die(__LINE__, "No config file found on given path");
+        die(__FILE__, __LINE__, "No config file found on given path");
     }
     FILE* config = fopen(path, "r");
     if (config == NULL) {
-        die(__LINE__, "Unable to read file.");
+        die(__FILE__, __LINE__, "Unable to read file.");
     }
     if (ini_parse_file(config, ini_line_handler, dest) < 0) {
-        die(__LINE__, "Can't load config file");
+        die(__FILE__, __LINE__, "Can't load config file");
         fclose(config);
         return;
     }
@@ -124,15 +121,16 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
             { "debug", no_argument, 0, 1 },
             { "version", no_argument, 0, 1 },
             { "trace", no_argument, 0, 1 },
-            { "debug_output_filename", required_argument, 0, 'o' },
+            { "debug-output-filename", required_argument, 0, 'o' },
             { "max-udp", required_argument, 0, 'u' },
             { "tcpaddr", required_argument, 0, 't' },
             { "port", required_argument, 0, 'a' },
             { "parser-type", required_argument, 0, 'p'},
+            { "duration-aggregation-type", required_argument, 0, 'd'},
             { 0, 0, 0, 0 }
         };
         int option_index = 0;
-        c = getopt_long_only(argc, argv, "o::u::t::a::p::", long_options, &option_index);
+        c = getopt_long_only(argc, argv, "o::u::t::a::p::d::", long_options, &option_index);
         if (c == -1) break;
         switch (c) {
             case 0:
@@ -158,6 +156,9 @@ void read_agent_config_cmd(agent_config** dest, int argc, char **argv) {
             case 'p':
                 (*dest)->parser_type = atoi(optarg);
                 break;
+            case 'd':
+                (*dest)->duration_aggregation_type = atoi(optarg);
+                break;
         }
     }
 }
@@ -179,5 +180,6 @@ void print_agent_config(agent_config* config) {
     printf("tcpaddr: %s \n", config->tcp_address);
     printf("port: %s \n", config->port);
     printf("parser_type: %s \n", config->parser_type == 0 ? "TRIVIAL" : "RAGEL");
+    printf("duration_aggregation_type: %s\n", config->duration_aggregation_type == 0 ? "HDR_HISTOGRAM" : "BASIC");
     printf("---------------------------\n");
 }
