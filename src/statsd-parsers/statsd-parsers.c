@@ -136,7 +136,7 @@ void* statsd_parser_consume(void* args) {
     chan_t* parsed_channel = ((statsd_parser_args*)args)->parsed_datagrams;
     agent_config* config = ((statsd_parser_args*)args)->config;
     int (*parse_datagram)(char*, statsd_datagram**);
-    if (config->parser_type == PARSER_TRIVIAL) {
+    if ((int)config->parser_type == (int)PARSER_TRIVIAL) {
         parse_datagram = &basic_parser_parse;
     } else {
         // parse_datagram = &ragel_parser_parse;

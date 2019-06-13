@@ -4,6 +4,7 @@
 #include <hdr/hdr_histogram.h>
 #include <float.h>
 #include <math.h>
+#include <pcp/dict.h>
 
 #include "../../statsd-parsers/statsd-parsers.h"
 #include "../../config-reader/config-reader.h"
