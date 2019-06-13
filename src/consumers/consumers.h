@@ -1,7 +1,7 @@
 #ifndef CONSUMERS_
 #define CONSUMERS_
 
-#include "../utils/dict.h"
+#include <pcp/dict.h>
 
 typedef struct metric_metadata {
     char* tags;

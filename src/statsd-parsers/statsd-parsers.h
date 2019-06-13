@@ -1,9 +1,9 @@
 #ifndef STATSD_PARSERS_
 #define STATSD_PARSERS_
 
+#include <pcp/dict.h>
 #include <chan/chan.h>
 
-#include "../utils/dict.h"
 #include "../config-reader/config-reader.h"
 
 typedef dict metrics;

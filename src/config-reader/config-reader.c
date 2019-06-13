@@ -2,9 +2,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <pcp/dict.h>
 #include "config-reader.h"
 #include "../utils/utils.h"
-#include "../utils/ini.h"
 
 /**
  * Flags for available config source
@@ -52,6 +52,7 @@ agent_config* read_agent_config(int src_flag, char* config_path, int argc, char 
 }
 
 static int ini_line_handler(void* user, const char* section, const char* name, const char* value) {
+    (void)section;
     agent_config* dest = *(agent_config**) user;
     size_t length = strlen(value) + 1; 
     #define MATCH(x) strcmp(x, name) == 0
@@ -96,17 +97,11 @@ void read_agent_config_file(agent_config** dest, char* path) {
     if (access(path, F_OK) == -1) {
         die(__FILE__, __LINE__, "No config file found on given path");
     }
-    FILE* config = fopen(path, "r");
-    if (config == NULL) {
-        die(__FILE__, __LINE__, "Unable to read file.");
-    }
-    if (ini_parse_file(config, ini_line_handler, dest) < 0) {
+    if (ini_parse(path, ini_line_handler, dest) < 0) {
         die(__FILE__, __LINE__, "Can't load config file");
-        fclose(config);
         return;
     }
     verbose_log("Config loaded from %s.", path);
-    fclose(config);
 }
 
 /**
