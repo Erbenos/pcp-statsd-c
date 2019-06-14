@@ -2,9 +2,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <pcp/dict.h>
 #include "config-reader.h"
 #include "../utils/utils.h"
+#include "../utils/ini.h"
 
 /**
  * Flags for available config source
