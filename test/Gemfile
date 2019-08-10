@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+gem 'rubysl-open3'
+gem 'inifile'
+gem 'fileutils'
+gem 'colorize'

@@ -411,6 +411,15 @@ check_metric_name_available(struct pmda_metrics_container* container, char* key)
         "pmda.metrics_tracked",
         "pmda.time_spent_aggregating",
         "pmda.time_spent_parsing",
+        "pmda.settings.max_udp_packet_size",
+        "pmda.settings.max_unprocessed_packets",
+        "pmda.settings.verbose",
+        "pmda.settings.debug",
+        "pmda.settings.debug_output_filename",
+        "pmda.settings.port",
+        "pmda.settings.tcp_address",
+        "pmda.settings.parser_type",
+        "pmda.settings.duration_aggregation_type"
     };
     size_t i;
     for (i = 0; i < sizeof(g_blacklist) / sizeof(g_blacklist[0]); i++) {
