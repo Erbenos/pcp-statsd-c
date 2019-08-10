@@ -284,17 +284,67 @@ inst [10 or "/max::target=cpu0"] labels {"target":"cpu0"}
 ## Hardcoded stats
 Agent also exports metrics about itself:
 
-- **statsd.pmda.received** <br>Number of datagrams that the agent has received
-- **statsd.pmda.parsed** <br>Number of datagrams that were successfully parsed
-- **statsd.pmda.dropped** <br>Number of datagrams that were dropped
-- **statsd.pmda.aggregated** <br>Number of datagrams that were aggregated
-- **statsd.pmda.metrics_tracked**
-    - **counter** - Number of tracked counter metrics
-    - **gauge** - Number of tracked gauge metrics
-    - **duration** - Number of tracked duration metrics
-    - **total** - Number of tracked metrics total
-- **statsd.pmda.time_spent_parsing** <br>Total time in nanoseconds spent parsing metrics
-- **statsd.pmda.time_spent_aggregating** <br>Total time in nanoseconds spent aggregating metrics
+<details>
+    <summary><strong>statsd.pmda.received</strong></summary>
+    Number of datagrams that the agent has received
+</details>
+<details>
+    <summary><strong>statsd.pmda.parsed</strong></summary>
+    Number of datagrams that were successfully parsed
+</details>
+<details>
+    <summary><strong>statsd.pmda.dropped</strong></summary>
+    Number of datagrams that were dropped
+</details>
+<details>
+    <summary><strong>statsd.pmda.aggregated</strong></summary>
+    Number of datagrams that were aggregated
+</details>
+<details>
+    <summary><strong>statsd.pmda.metrics_tracked</strong></summary>
+    <ul>
+        <li><strong>counter</strong> - Number of tracked counter metrics</li>
+        <li><strong>gauge</strong> - Number of tracked gauge metrics</li>
+        <li><strong>duration</strong> - Number of tracked duration metrics</li>
+        <li><strong>total</strong> - Number of tracked metrics total</li>
+    </ul>
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.max_udp_packet_size</strong></summary>
+    Maximum UDP packet size
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.max_unprocessed_packets</strong></summary>
+    Maximum size of unprocessed packets Q
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.verbose</strong></summary>
+    Verbosity flag
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.debug</strong></summary>
+    Debug flag
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.debug_output_filename</strong></summary>
+    Debug output filename
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.port</strong></summary>
+    Port that is listened to
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.tcp_address</strong></summary>
+    TCP address that is listened to
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.parser_type</strong></summary>
+    Used parser type
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.duration_aggregation_type</strong></summary>
+    Used duration aggregation type
+</details>
 
 These names are blacklisted for user usage. No messages with these names will processed. While not yet reserved, whole <strong>statsd.pmda.*</strong> namespace is not recommended to use for user metrics.
 

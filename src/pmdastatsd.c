@@ -95,20 +95,32 @@ create_statsd_hardcoded_instances(struct pmda_data_extension* data) {
 static void
 create_statsd_hardcoded_metrics(struct pmda_data_extension* data) {
     size_t i;
-    size_t hardcoded_count = 7;
+    size_t hardcoded_count = 16;
     data->pcp_metrics = (pmdaMetric*) malloc(hardcoded_count * sizeof(pmdaMetric));
     ALLOC_CHECK("Unable to allocate space for static PMDA metrics.");
     // helper containing only reference to priv data same for all hardcoded metrics
     static struct pmda_metric_helper helper;
+    size_t agent_stat_count = 7;
     helper.data = data;
     for (i = 0; i < hardcoded_count; i++) {
         data->pcp_metrics[i].m_user = &helper;
         data->pcp_metrics[i].m_desc.pmid = pmID_build(STATSD, 0, i);
-        data->pcp_metrics[i].m_desc.type = PM_TYPE_U64;
         data->pcp_metrics[i].m_desc.sem = PM_SEM_INSTANT;
-        if (i == 4) {
-            data->pcp_metrics[i].m_desc.indom = STATS_METRIC_COUNTERS_INDOM;
+        if (i < agent_stat_count) {
+            data->pcp_metrics[i].m_desc.type = PM_TYPE_U64;
+            if (i == 4) {
+                data->pcp_metrics[i].m_desc.indom = STATS_METRIC_COUNTERS_INDOM;
+            } else {
+                data->pcp_metrics[i].m_desc.indom = PM_INDOM_NULL;
+            }            
         } else {
+            if (i == 7) {
+                data->pcp_metrics[i].m_desc.type = PM_TYPE_U64;
+            } else if (i < 11 || i == 12) {
+                data->pcp_metrics[i].m_desc.type = PM_TYPE_U32;
+            } else {
+                data->pcp_metrics[i].m_desc.type = PM_TYPE_STRING;
+            }
             data->pcp_metrics[i].m_desc.indom = PM_INDOM_NULL;
         }
         if (i == 5 || i == 6) {

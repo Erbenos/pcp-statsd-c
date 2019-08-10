@@ -1,0 +1,19 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.8.1)
+    fileutils (1.2.0)
+    inifile (3.0.0)
+    rubysl-open3 (2.0.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  colorize
+  fileutils
+  inifile
+  rubysl-open3
+
+BUNDLED WITH
+   2.0.2

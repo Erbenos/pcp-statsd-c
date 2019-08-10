@@ -36,7 +36,9 @@ network_listener_exec(void* args) {
     hints.ai_protocol = 0;
     hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
     struct addrinfo* res = 0;
-    int err = getaddrinfo(hostname, config->port, &hints, &res);
+    char port_buffer[6];
+    pmsprintf(port_buffer, 6, "%d", config->port);
+    int err = getaddrinfo(hostname, port_buffer, &hints, &res);
     if (err != 0) {
         DIE("failed to resolve local socket address (err=%s)", gai_strerror(err));
     }

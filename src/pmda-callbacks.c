@@ -331,25 +331,10 @@ map_metric(char* key, struct metric* item, void* pmda) {
     pmdaTreeInsert(data->pcp_pmns, item->meta->pmid, item->meta->pcp_name);
 }
 
-/**
- * Maps all stats (both hardcoded and the ones aggregated from StatsD datagrams) to 
- */
 static void
-statsd_map_stats(pmdaExt* pmda) {
+insert_hardcoded_metrics(pmdaExt* pmda) {
     struct pmda_data_extension* data = (struct pmda_data_extension*) pmdaExtGetData(pmda);
     char name[64];
-    int status = 0;
-    if (data->pcp_pmns) {
-        pmdaTreeRelease(data->pcp_pmns);
-        data->notify |= PMDA_EXT_NAMES_CHANGE; 
-    }
-    status = pmdaTreeCreate(&data->pcp_pmns);
-    if (status < 0) {
-        pmNotifyErr(LOG_ERR, "%s: failed to create new pmns: %s\n", pmGetProgname(), pmErrStr(status));
-        data->pcp_pmns = NULL;
-        return;
-    } 
-    reset_stat(data->config, data->stats_storage, STAT_TRACKED_METRIC);
     pmsprintf(name, 64, "statsd.pmda.received");
     pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 0), name);
     pmsprintf(name, 64, "statsd.pmda.parsed");
@@ -364,7 +349,45 @@ statsd_map_stats(pmdaExt* pmda) {
     pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 5), name);
     pmsprintf(name, 64, "statsd.pmda.time_spent_aggregating");
     pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 6), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.max_udp_packet_size");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 7), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.max_unprocessed_packets");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 8), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.verbose");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 9), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.debug");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 10), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.debug_output_filename");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 11), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.port");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 12), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.tcp_address");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 13), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.parser_type");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 14), name);
+    pmsprintf(name, 64, "statsd.pmda.settings.duration_aggregation_type");
+    pmdaTreeInsert(data->pcp_pmns, pmID_build(pmda->e_domain, 0, 15), name);
+}
 
+/**
+ * Maps all stats (both hardcoded and the ones aggregated from StatsD datagrams) to 
+ */
+static void
+statsd_map_stats(pmdaExt* pmda) {
+    struct pmda_data_extension* data = (struct pmda_data_extension*) pmdaExtGetData(pmda);
+    int status = 0;
+    if (data->pcp_pmns) {
+        pmdaTreeRelease(data->pcp_pmns);
+        data->notify |= PMDA_EXT_NAMES_CHANGE; 
+    }
+    status = pmdaTreeCreate(&data->pcp_pmns);
+    if (status < 0) {
+        pmNotifyErr(LOG_ERR, "%s: failed to create new pmns: %s\n", pmGetProgname(), pmErrStr(status));
+        data->pcp_pmns = NULL;
+        return;
+    } 
+    reset_stat(data->config, data->stats_storage, STAT_TRACKED_METRIC);
+    insert_hardcoded_metrics(pmda);
     struct pmda_metrics_container* container = data->metrics_storage;
     pthread_mutex_lock(&container->mutex);
     metrics* m = container->metrics;
@@ -521,6 +544,80 @@ statsd_text(int ident, int type, char** buffer, pmdaExt* pmda) {
                 static char oneliner[] = "Total time in microseconds spent aggregating metrics";
                 static char full_description[] = 
                     "Total time in microseconds spent aggregating metrics. Includes time spent aggregating a metric and failing midway.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 7:
+            {
+                static char oneliner[] = "Maximum UDP packet size";
+                static char full_description[] = 
+                    "Maximum UDP packet size. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 8:
+            {
+                static char oneliner[] = "Maximum size of unprocessed packets Q";
+                static char full_description[] = 
+                    "Maximum size of unprocessed packets Q. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 9:
+            {
+                static char oneliner[] = "Verbosity flag.";
+                static char full_description[] = 
+                    "Verbosity flag. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 10:
+            {
+                static char oneliner[] = "Debug flag.";
+                static char full_description[] = 
+                    "Debug flag. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 11:
+            {
+                static char oneliner[] = "Debug output filename.";
+                static char full_description[] = 
+                    "Debug output filename. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 12:
+            {
+                static char oneliner[] = "Port that is listened to.";
+                static char full_description[] = 
+                    "Port that is listened to. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+            }
+            case 13:
+            {
+                static char oneliner[] = "TCP address that is listened to.";
+                static char full_description[] = 
+                    "TCP address that is listened to. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+                return 0;
+            }
+            case 14:
+            {
+                static char oneliner[] = "Used parser type.";
+                static char full_description[] = 
+                    "Used parser type. This shows current setting.\n";
+                *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
+                return 0;
+                return 0;
+            }
+            case 15: 
+            {
+                static char oneliner[] = "Used duration aggregation type.";
+                static char full_description[] = 
+                    "Used duration aggregation type. This shows current setting.\n";
                 *buffer = (type & PM_TEXT_ONELINE) ? oneliner : full_description;
                 return 0;
             }
@@ -691,7 +788,7 @@ statsd_resolve_static_metric_fetch(pmdaMetric* mdesc, unsigned int instance, pmA
     struct agent_config* config = data->config;
     struct pmda_stats_container* stats = data->stats_storage;
     unsigned int item = pmID_item(mdesc->m_desc.pmid);
-    int status = PMDA_FETCH_STATIC; 
+    int status = PMDA_FETCH_STATIC;
     switch (item) {
         /* received */
         case 0:
@@ -738,6 +835,81 @@ statsd_resolve_static_metric_fetch(pmdaMetric* mdesc, unsigned int instance, pmA
         case 6:
             (*atom)->ull = get_agent_stat(config, stats, STAT_TIME_SPENT_AGGREGATING, NULL);
             break;
+
+        /* settings.max_udp_packet_size */
+        case 7:
+            (*atom)->ull = (__uint64_t) config->max_udp_packet_size;
+            break;
+        /* settings.max_unprocessed_packets */
+        case 8:
+            (*atom)->ul = config->max_unprocessed_packets;
+            break;
+        /* settings.verbose */
+        case 9:
+            (*atom)->ul = config->verbose;
+            break;
+        /* settings.debug */
+        case 10:
+            (*atom)->ul = config->debug;
+            break;
+        /* settings.debug_output_filename */
+        case 11:
+        {
+            size_t length = strlen(config->debug_output_filename) + 1;
+            char* result = (char*) malloc(sizeof(char) * length);
+            ALLOC_CHECK("Unable to allocate memory for port value.");
+            memcpy(result, config->debug_output_filename, length);
+            (*atom)->cp = result;
+            break;
+        }
+        /* settings.port */
+        case 12:
+            (*atom)->ul = config->port;
+            break;
+        /* settings.tcp_address */
+        case 13:
+        {
+            size_t length = strlen(config->tcp_address) + 1;
+            char* result = (char*) malloc(sizeof(char) * length);
+            ALLOC_CHECK("Unable to allocate memory for tcp address value.");
+            memcpy(result, config->tcp_address, length);
+            (*atom)->cp = result;
+            break;
+        }
+        /* settings.parser_type */
+        case 14:
+        {   
+            size_t length = 6;
+            char* result = (char*) malloc(sizeof(char) * length);
+            ALLOC_CHECK("Unable to allocate memory for parser type value.");
+            char* basic = "Basic";
+            char* ragel = "Ragel";
+            if (config->parser_type == PARSER_TYPE_BASIC) {
+                memcpy(result, basic, length);
+            } else {
+                memcpy(result, ragel, length);
+            }
+            (*atom)->cp = result;
+            break;
+        }
+        /* settings.duration_aggregation_type */
+        case 15:
+        {
+            char* result;
+            char* basic = "Basic";
+            char* ragel = "HDR histogram";
+            if (config->duration_aggregation_type == DURATION_AGGREGATION_TYPE_BASIC) {
+                result = (char*) malloc(sizeof(char) * 6);
+                ALLOC_CHECK("Unable to allocate memory for duration aggregation type value.");
+                memcpy(result, basic, 6);
+            } else {
+                result = (char*) malloc(sizeof(char) * 14);
+                ALLOC_CHECK("Unable to allocate memory for duration aggregation type value.");
+                memcpy(result, ragel, 14);
+            }
+            (*atom)->cp = result;
+            break;
+        }
         default:
             status = PM_ERR_PMID;
     }
