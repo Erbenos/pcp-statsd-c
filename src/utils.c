@@ -41,14 +41,14 @@ static int g_verbose_flag = 0;
 static int g_debug_flag = 0;
 
 /**
- * Sanitizes string
- * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails. 
- * First character needs to be in a-zA-Z
+ * Validates valid metric name string
+ * Checks if string starts with [a-zA-Z] and that rest is [a-zA-Z0-9._]
  * @arg src - String to be sanitized
+ * @arg num - Boundary
  * @return 1 on success
  */
 int
-sanitize_string(char *src, size_t num) {
+validate_metric_name_string(char* src, size_t num) {
     size_t segment_length = strlen(src);
     if (segment_length == 0) {
         return 0;
@@ -67,6 +67,39 @@ sanitize_string(char *src, size_t num) {
                 return 0;
             }
         }
+        if (((int) current_char >= (int) 'a' && (int) current_char <= (int) 'z') ||
+            ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'Z') ||
+            ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') ||
+            (int) current_char == (int) '.' ||
+            (int) current_char == (int) '_') {
+            continue;
+        } else {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/**
+ * Sanitizes string
+ * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails. 
+ * First character needs to be in a-zA-Z
+ * @arg src - String to be sanitized
+ * @arg num - Boundary
+ * @return 1 on success
+ */
+int
+sanitize_string(char* src, size_t num) {
+    size_t segment_length = strlen(src);
+    if (segment_length == 0) {
+        return 0;
+    }
+    if (segment_length > num) {
+        segment_length = num;
+    }
+    size_t i;
+    for (i = 0; i < segment_length; i++) {
+        char current_char = src[i];
         if (((int) current_char >= (int) 'a' && (int) current_char <= (int) 'z') ||
             ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'Z') ||
             ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') ||

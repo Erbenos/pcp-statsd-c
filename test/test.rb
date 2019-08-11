@@ -37,8 +37,8 @@ config['global']['max_udp_packet_size'] = 1472
 config['global']['port'] = 8125
 config['global']['max_unprocessed_packets'] = 1024
 config['global']['tcp_address'] = '0.0.0.0'
-config['global']['verbose'] = 0
-config['global']['debug'] = 0
+config['global']['verbose'] = 1
+config['global']['debug'] = 1
 config['global']['debug_output_filename'] = 'debug'
 config['global']['duration_aggregation_type'] = 0
 config['global']['parser_type'] = 0
@@ -60,7 +60,7 @@ config = config_files.sort
 barebones = restart | base
 metric_tests = restart | metrics
 
-# puts "▸ Testing agent barebones"
+puts "▸ Testing agent barebones"
 
 barebones.each{|s| 
   load s

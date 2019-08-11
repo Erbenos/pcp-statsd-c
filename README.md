@@ -106,7 +106,7 @@ There may be multiple such messages in single datagram, split by a newline chara
 is valid as well.
 
 ```
-<metricname> = ([a-zA-Z]{1})[a-zA-Z0-9_\-/ .]
+<metricname> = [a-z][a-zA-Z0-9_\-/ .]*
 <value>      = described further in each metric type
 <type>       = 'c'|'g'|'ms'
 ```

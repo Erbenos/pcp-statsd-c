@@ -50,7 +50,6 @@ payloads.each { |payload|
 # Check received stat
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge -f")
 if !stderr.empty? && stdout.include?("value " + gauge_expected_result.to_s)
-  puts 1
   err_count = err_count + 1
 end
 
@@ -64,8 +63,6 @@ ds.send("test_gauge_overflow:+" + test_payload.to_s + "|g", 0);
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge_overflow -f")
 # this should match, because we recorded value only once, second datagram resulted in overflow and was ignored
 unless stderr.empty? && stdout.include?("value 1.078615880917389e+308") # this is equal to Float::MAX * 0.6
-  puts 2
-  puts stdout
   err_count = err_count + 1
 end
 
@@ -76,15 +73,12 @@ ds.send("test_gauge_underflow:-" + test_payload.to_s + "|g", 0);
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge_underflow -f")
 # this should match, because we recorded value only once, second datagram resulted in underflow and was ignored
 unless stderr.empty? && stdout.include?("value -1.078615880917389e+308") # this is equal to Float::MAX * 0.6
-  puts 3
-  puts stdout
   err_count = err_count + 1
 end
 
 expected_val = (current_dropped_count + expected_dropped_count).to_s
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.dropped -f")
 unless stderr.empty? && stdout.include?("value " + expected_val)
-  puts stdout
   err_count = err_count + 1
 end
 
