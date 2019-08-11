@@ -12,12 +12,16 @@
 
 #define VERBOSE_LOG(format, ...) \
     if (is_verbose()) { \
+        log_mutex_lock(); \
         pmNotifyErr(LOG_INFO, format, ## __VA_ARGS__); \
+        log_mutex_unlock(); \
     } \
 
 #define DEBUG_LOG(format, ...) \
     if (is_debug()) { \
+        log_mutex_lock(); \
         pmNotifyErr(LOG_DEBUG, format, ## __VA_ARGS__); \
+        log_mutex_unlock(); \
     } \
 
 /**
@@ -48,17 +52,22 @@
  * Exists program
  */
 #define DIE(format, ...) \
-    pmNotifyErr(LOG_ALERT, format, ## __VA_ARGS__);
+    log_mutex_lock(); \
+    pmNotifyErr(LOG_ALERT, format, ## __VA_ARGS__); \
+    log_mutex_unlock(); \
 
 /**
  * Prints warning message
  */
 #define WARN(format, ...) \
-    pmNotifyErr(LOG_WARNING, format, ## __VA_ARGS__);
+    log_mutex_lock(); \
+    pmNotifyErr(LOG_WARNING, format, ## __VA_ARGS__); \
+    log_mutex_unlock(); \
 
 /**
  * Sanitizes string
- * Swaps '/', '-', ' ' characters with '-'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails.
+ * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails. 
+ * First character needs to be in a-zA-Z
  * @arg src - String to be sanitized
  * @return 1 on success
  */
@@ -106,6 +115,12 @@ is_verbose();
  */
 int
 is_debug();
+
+void
+log_mutex_lock();
+
+void
+log_mutex_unlock();
 
 /**
  * Initializes debugging/verbose/tracing flags based on given config

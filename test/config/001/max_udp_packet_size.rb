@@ -16,9 +16,9 @@ statsd_pmda_dir = stdout.chomp
 statsd_pmda_config = "pmdastatsd.ini"
 
 def restart_agent
-    preamble = ". /etc/pcp.conf && cd $PCP_PMDAS_DIR/statsd"
-    stdout, stderr, status = Open3.capture3(preamble + " && sudo make deactivate")
-    stdout, stderr, status = Open3.capture3(preamble + " && sudo make activate")
+  preamble = ". /etc/pcp.conf && cd $PCP_PMDAS_DIR/statsd"
+  stdout, stderr, status = Open3.capture3(preamble + " && sudo make deactivate")
+  stdout, stderr, status = Open3.capture3(preamble + " && sudo make activate")
 end
 
 config_file = File.join(statsd_pmda_dir, statsd_pmda_config)
@@ -34,7 +34,7 @@ ds.send("hello_test:1|c", 0)
 sleep(0.1)
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.received -f")
 if !stderr.empty? || !stdout.include?("value 1")
-    err_count = err_count + 1
+  err_count = err_count + 1
 end
 
 # try setting too small value
@@ -49,13 +49,13 @@ ds.send("hello_test:1|c", 0)
 sleep(0.1)
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.received -f")
 if !stderr.empty? || !stdout.include?("value 0")
-    err_count = err_count + 1
+  err_count = err_count + 1
 end
 
 # check if small value was used
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.settings.max_udp_packet_size -f")
 if !stderr.empty? || !stdout.include?("value 1")
-    err_count = err_count + 1
+  err_count = err_count + 1
 end
 
 # try setting invalid value
@@ -68,7 +68,7 @@ restart_agent
 # check if default fallback was used
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.settings.max_udp_packet_size -f")
 if !stderr.empty? || !stdout.include?("value 1472")
-    err_count = err_count + 1
+  err_count = err_count + 1
 end
 
 print "\r"
@@ -80,3 +80,7 @@ else
   puts "✖".red + " Option max_udp_packet_size fails: " + err_count.to_s + "   "
 end
 
+config_file = File.join(statsd_pmda_dir, statsd_pmda_config)
+config = IniFile.load(config_file)
+config.delete_section "global"
+config.write

@@ -28,7 +28,6 @@ struct agent_config {
     unsigned int port;
     char* debug_output_filename;
     char* username;
-    char* tcp_address;
 } agent_config;
 
 /**

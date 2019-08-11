@@ -76,3 +76,7 @@ else
   puts "✖".red + " Option port fails: " + err_count.to_s + "   "
 end
 
+config_file = File.join(statsd_pmda_dir, statsd_pmda_config)
+config = IniFile.load(config_file)
+config.delete_section "global"
+config.write
