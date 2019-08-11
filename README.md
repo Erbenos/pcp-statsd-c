@@ -64,7 +64,6 @@ Agent looks for *pmdastatsd.ini* within it's root directory by default.
 It accepts following parameters:
 
 - **max_udp_packet_size** - Maximum allowed packet size <br>default: _1472_
-- **tcp_address** - On which IP is agent listening for incoming trafic <br>default: _0.0.0.0_
 - **port** - On which port is agent listening for incoming trafic <br>default: _8125_
 - **verbose** - Flag controlling whether or not to allow verbose logging <br>default: _1_
 - **debug** - Flag controlling whether or not to allow debug logging <br>default: _0_
@@ -79,7 +78,6 @@ It accepts following parameters:
 Agent accepts all arguments that any PMDA accepts by default, including those specified above, in following form:
 
 - --max-udp, -Z
-- --tcp-address, -t
 - --port, -P
 - --verbose, -v
 - --debug, -g
@@ -108,10 +106,12 @@ There may be multiple such messages in single datagram, split by a newline chara
 is valid as well.
 
 ```
-<metricname> = [a-zA-Z0-9_\-/ .]{1,}
+<metricname> = ([a-zA-Z]{1})[a-zA-Z0-9_\-/ .]
 <value>      = described further in each metric type
 <type>       = 'c'|'g'|'ms'
 ```
+
+Metric name is farther sanitized to allow only alphanumerical characters and underscore.
 
 If verbose loggings is turned on, agent will log every message parsed and related failures.
 
@@ -332,10 +332,6 @@ Agent also exports metrics about itself:
 <details>
     <summary><strong>statsd.pmda.settings.port</strong></summary>
     Port that is listened to
-</details>
-<details>
-    <summary><strong>statsd.pmda.settings.tcp_address</strong></summary>
-    TCP address that is listened to
 </details>
 <details>
     <summary><strong>statsd.pmda.settings.parser_type</strong></summary>

@@ -95,7 +95,7 @@ create_statsd_hardcoded_instances(struct pmda_data_extension* data) {
 static void
 create_statsd_hardcoded_metrics(struct pmda_data_extension* data) {
     size_t i;
-    size_t hardcoded_count = 16;
+    size_t hardcoded_count = 15;
     data->pcp_metrics = (pmdaMetric*) malloc(hardcoded_count * sizeof(pmdaMetric));
     ALLOC_CHECK("Unable to allocate space for static PMDA metrics.");
     // helper containing only reference to priv data same for all hardcoded metrics

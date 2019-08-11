@@ -121,7 +121,7 @@ get_exact_duration_instance(struct exact_duration_collection* collection, enum D
             return (double)collection->length;
         case DURATION_STANDARD_DEVIATION:
         {
-            double accumulator = 0;
+            long double accumulator = 0;
             for (i = 0; i < collection->length; i++) {
                 accumulator += *(collection->values[i]);
             }

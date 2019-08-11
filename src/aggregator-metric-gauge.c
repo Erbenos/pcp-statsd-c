@@ -48,12 +48,20 @@ update_gauge_value(struct agent_config* config, struct statsd_datagram* datagram
         default:
             new_value = datagram->value;
     }
-    if ((old + new_value <= DBL_MAX) || (old - new_value >= -DBL_MAX)) {
-        if (datagram->explicit_sign == SIGN_NONE) {
-            *(double*)(value) = new_value;
-        } else {
-            *(double*)(value) += new_value;
-        }
+    // check for overflow
+    if (old > 0 && new_value > DBL_MAX - old) {
+        WARN("Caught double overflow.");
+        return 0;
+    }
+    // check for underflow
+    if (old < 0 && new_value < DBL_MAX - old) {
+        WARN("Caught double underflow.");
+        return 0;
+    }
+    if (datagram->explicit_sign == SIGN_NONE) {
+        *(double*)(value) = new_value;
+    } else {
+        *(double*)(value) += new_value;
     }
     return 1;
 }

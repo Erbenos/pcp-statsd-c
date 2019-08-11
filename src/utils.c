@@ -26,6 +26,11 @@
 #define GAUGE_METRIC "g"
 
 /**
+ * Used to prevent racing between pmErrLog function calls in different threads 
+ */
+static pthread_mutex_t g_log_mutex;
+
+/**
  * Flag used to determine if VERBOSE output is allowed to be printed
  */
 static int g_verbose_flag = 0;
@@ -37,7 +42,8 @@ static int g_debug_flag = 0;
 
 /**
  * Sanitizes string
- * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails.
+ * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails. 
+ * First character needs to be in a-zA-Z
  * @arg src - String to be sanitized
  * @return 1 on success
  */
@@ -53,6 +59,14 @@ sanitize_string(char *src, size_t num) {
     size_t i;
     for (i = 0; i < segment_length; i++) {
         char current_char = src[i];
+        if (i == 0) {
+            if (((int) current_char >= (int) 'a' && (int) current_char <= (int) 'z') ||
+                ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'Z')) {
+                continue;
+            } else {
+                return 0;
+            }
+        }
         if (((int) current_char >= (int) 'a' && (int) current_char <= (int) 'z') ||
             ((int) current_char >= (int) 'A' && (int) current_char <= (int) 'Z') ||
             ((int) current_char >= (int) '0' && (int) current_char <= (int) '9') ||
@@ -71,7 +85,7 @@ sanitize_string(char *src, size_t num) {
 }
 
 /**
- * Validates string
+ * Validates metric val string
  * Checks if there are any non numerical characters (0-9), excluding '+' and '-' on first position and is not empty.
  * @arg src - String to be validated
  * @return 1 on success
@@ -151,7 +165,8 @@ sanitize_type_val_string(char* src, enum METRIC_TYPE* out) {
  * Check *verbose* flag
  * @return verbose flag
  */
-int is_verbose() {
+int 
+is_verbose() {
     return g_verbose_flag;
 }
 
@@ -159,8 +174,19 @@ int is_verbose() {
  * Check *debug* flag
  * @return debug flag
  */
-int is_debug() {
+int 
+is_debug() {
     return g_debug_flag;
+}
+
+void
+log_mutex_lock() {
+    pthread_mutex_lock(&g_log_mutex);
+}
+
+void
+log_mutex_unlock() {
+    pthread_mutex_unlock(&g_log_mutex);
 }
 
 /**

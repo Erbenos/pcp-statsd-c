@@ -29,13 +29,16 @@ payloads = [
   "-0.001",
   "-0.0001",
   "-0.00001",
-  # thrown away
-  Float::MAX,
-  Float::MIN,
+  # thrown away 
   "-1wqeqe",
   "-20weqe0",
   "-wqewqe20"
 ]
+
+expected_dropped_count = 5
+stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.dropped -f")
+lines = stdout.chomp.split "\n"
+current_dropped_count = lines[2].split(" ").last.to_i
 
 gauge_expected_result = 10000 + 11111 - 0.99999
 
@@ -45,9 +48,43 @@ payloads.each { |payload|
 } 
 
 # Check received stat
-
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge -f")
 if !stderr.empty? && stdout.include?("value " + gauge_expected_result.to_s)
+  puts 1
+  err_count = err_count + 1
+end
+
+
+# Check double bounds
+test_payload = (Float::MAX * 0.6).round
+# Check for overflow
+ds.send("test_gauge_overflow:+" + test_payload.to_s + "|g", 0);
+ds.send("test_gauge_overflow:+" + test_payload.to_s + "|g", 0);
+
+stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge_overflow -f")
+# this should match, because we recorded value only once, second datagram resulted in overflow and was ignored
+unless stderr.empty? && stdout.include?("value 1.078615880917389e+308") # this is equal to Float::MAX * 0.6
+  puts 2
+  puts stdout
+  err_count = err_count + 1
+end
+
+# Check for underflow
+ds.send("test_gauge_underflow:-" + test_payload.to_s + "|g", 0);
+ds.send("test_gauge_underflow:-" + test_payload.to_s + "|g", 0);
+
+stdout, stderr, status = Open3.capture3("pminfo statsd.test_gauge_underflow -f")
+# this should match, because we recorded value only once, second datagram resulted in underflow and was ignored
+unless stderr.empty? && stdout.include?("value -1.078615880917389e+308") # this is equal to Float::MAX * 0.6
+  puts 3
+  puts stdout
+  err_count = err_count + 1
+end
+
+expected_val = (current_dropped_count + expected_dropped_count).to_s
+stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.dropped -f")
+unless stderr.empty? && stdout.include?("value " + expected_val)
+  puts stdout
   err_count = err_count + 1
 end
 

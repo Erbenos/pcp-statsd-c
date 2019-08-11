@@ -19,7 +19,6 @@ set_default_config(struct agent_config* config) {
     config->debug_output_filename = "debug";
     config->show_version = 0;
     config->port = 8125;
-    config->tcp_address = (char *) "0.0.0.0";
     config->parser_type = PARSER_TYPE_BASIC;
     config->duration_aggregation_type = DURATION_AGGREGATION_TYPE_HDR_HISTOGRAM;
     pmGetUsername(&(config->username));
@@ -53,10 +52,6 @@ ini_line_handler(void* user, const char* section, const char* name, const char* 
         if (param < UINT32_MAX) {
             dest->max_unprocessed_packets = (unsigned int) param;
         }
-    } else if (MATCH("tcp_address")) {
-        dest->tcp_address = (char*) malloc(length);
-        ALLOC_CHECK("Unable to assign memory for config tcp address.");
-        memcpy(dest->tcp_address, value, length);
     } else if (MATCH("port")) {
         long unsigned int param = strtoul(value, NULL, 10);
         if (param < 65535) {
@@ -165,9 +160,6 @@ read_agent_config_cmd(pmdaInterface* dispatch, struct agent_config* dest, int ar
                 printf("output: %s \n", opts.optarg);
                 dest->max_udp_packet_size = strtoll(opts.optarg, NULL, 10);
                 break;
-            case 't':
-                dest->tcp_address = opts.optarg;
-                break;
             case 'P':
             {
                 long unsigned int param = strtoul(opts.optarg, NULL, 10);
@@ -225,7 +217,6 @@ print_agent_config(struct agent_config* config) {
     if (config->show_version)
         pmNotifyErr(LOG_INFO, "version flag is set");
     pmNotifyErr(LOG_INFO, "debug_output_filename: %s \n", config->debug_output_filename);
-    pmNotifyErr(LOG_INFO, "tcpaddr: %s \n", config->tcp_address);
     pmNotifyErr(LOG_INFO, "port: %d \n", config->port);
     pmNotifyErr(LOG_INFO, "parser_type: %s \n", config->parser_type == PARSER_TYPE_BASIC ? "BASIC" : "RAGEL");
     pmNotifyErr(LOG_INFO, "maximum of unprocessed packets: %d \n", config->max_unprocessed_packets);
