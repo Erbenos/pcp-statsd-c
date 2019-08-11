@@ -51,7 +51,6 @@ payloads.each { |payload|
 # Check received stat
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_counter -f")
 unless stderr.empty? && stdout.include?("value " + counter_expected_result.to_s)
-  puts stdout
   err_count = err_count + 1
 end
 
@@ -63,14 +62,12 @@ ds.send("test_counter_overflow:" + test_payload.to_s + "|c", 0);
 stdout, stderr, status = Open3.capture3("pminfo statsd.test_counter_overflow -f")
 # this should match, because we recorded value only once, second datagram resulted in overflow and was ignored
 unless stderr.empty? && stdout.include?("value 1.078615880917389e+308") # this is equal to Float::MAX * 0.6
-  puts stdout
   err_count = err_count + 1
 end
 
 expected_val = (current_dropped_count + expected_dropped_count).to_s
 stdout, stderr, status = Open3.capture3("pminfo statsd.pmda.dropped -f")
 unless stderr.empty? && stdout.include?("value " + expected_val)
-  puts stdout
   err_count = err_count + 1
 end
 
