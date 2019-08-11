@@ -54,7 +54,7 @@ init_pmda_metrics(struct agent_config* config) {
  */
 char*
 create_metric_dict_key(char* key) {
-    size_t maximum_key_size = 4096;
+    size_t maximum_key_size = 2048;
     char buffer[maximum_key_size]; // maximum key size
     int key_size = pmsprintf(
         buffer,
@@ -201,8 +201,9 @@ write_metrics_to_file(struct agent_config* config, struct pmda_metrics_container
         pmGetConfig("PCP_PMDAS_DIR"),
         sep, sep, config->debug_output_filename);
     FILE* f;
-    f = fopen(config->debug_output_filename, "a+");
+    f = fopen(debug_output, "a+");
     if (f == NULL) {
+        VERBOSE_LOG("Unable to open file for output.");
         return;
     }
     dictIterator* iterator = dictGetSafeIterator(m);
@@ -417,7 +418,6 @@ check_metric_name_available(struct pmda_metrics_container* container, char* key)
         "pmda.settings.debug",
         "pmda.settings.debug_output_filename",
         "pmda.settings.port",
-        "pmda.settings.tcp_address",
         "pmda.settings.parser_type",
         "pmda.settings.duration_aggregation_type"
     };
@@ -451,8 +451,8 @@ create_metric_meta(struct statsd_datagram* datagram) {
     } else {
         meta->pmindom = pmInDom_build(STATSD, STATSD_METRIC_DEFAULT_INDOM);
     }
-    char name[100];
-    size_t len = pmsprintf(name, 100, "statsd.%s", datagram->name) + 1;
+    char name[1024];
+    size_t len = pmsprintf(name, 1024, "statsd.%s", datagram->name) + 1;
     meta->pcp_name = (char*) malloc(sizeof(char) * len);
     ALLOC_CHECK("Unable to allocate memory for metric pcp name");
     memcpy((char*)meta->pcp_name, name, len);

@@ -32,7 +32,7 @@ basic_parser_parse(char* buffer, struct statsd_datagram** datagram) {
         return 1;
     }
     free_datagram(*datagram);
-    VERBOSE_LOG("Throwing away datagram. REASON: unable to parse: %s", buffer);
+    DEBUG_LOG("Throwing away datagram. REASON: unable to parse: %s", buffer);
     return 0;
 };
 

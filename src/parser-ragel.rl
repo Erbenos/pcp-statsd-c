@@ -174,13 +174,13 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 			current_segment_start_index = current_index + 1;
 		}
 
-		str_value = [a-zA-Z0-9_\-/ .]{1,};
+		str_value = ([a-zA-Z]{1})([a-zA-Z0-9_\-/ .]{1,})?;
+		tag_value = [a-zA-Z0-9_\-/ .]{1,};
 		name = str_value[:,]{1};
 		value = ('+'|'-')?[0-9]{1,310}([.][0-9]{1,310})?('|');
 		type = ('c'|'g'|'ms')('@'|'\0'|'\n\0');
-		tags = ((str_value'=')@tag_key_parsed(str_value(':'|',')@tag_value_parsed))+;
+		tags = ((str_value'=')@tag_key_parsed(tag_value(':'|',')@tag_value_parsed))+;
 		sampling = ([0-9]{1,310}([.][0-9]{1,310})?)('\0'|'\n\0');
-
 		main := 
 			  ((name @name_parsed . (tags @ tag_parsed)? . value @value_parsed . type @type_parsed . (sampling @sampling_parsed)?))
 			  $~increment_character_counter @!error_handler @/not_final_state_finish;
@@ -212,7 +212,7 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 	if (str[length - 1] == '\n')
         str[length - 1] = 0;
 	free_datagram(*datagram);
-	VERBOSE_LOG("Throwing away datagram. REASON: unable to parse: %s", str);
+	DEBUG_LOG("Throwing away datagram. REASON: unable to parse: %s", str);
 	return 0;
 };
 
