@@ -65,6 +65,16 @@
     log_mutex_unlock(); \
 
 /**
+ * Validates valid metric name string
+ * Checks if string starts with [a-zA-Z] and that rest is [a-zA-Z0-9._]
+ * @arg src - String to be sanitized
+ * @arg num - Boundary
+ * @return 1 on success
+ */
+int
+validate_metric_name_string(char* src, size_t num);
+
+/**
  * Sanitizes string
  * Swaps '/', '-', ' ' characters with '_'. Should the message contain any other characters then a-z, A-Z, 0-9 and specified above, fails. 
  * First character needs to be in a-zA-Z

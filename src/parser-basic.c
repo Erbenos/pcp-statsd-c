@@ -75,7 +75,7 @@ parse(char* buffer, struct statsd_datagram** datagram) {
             attr[current_segment_length] = '\0';
             ALLOC_CHECK("Not enough memory to parse StatsD datagram segment.");
             if (buffer[i] == ':' && previous_delimiter == ' ') {
-                if (!sanitize_string(attr, current_segment_length)) {
+                if (!sanitize_string(attr, current_segment_length) || !validate_metric_name_string(attr, current_segment_length)) {
                     goto error_clean_up;
                 }
                 (*datagram)->name = (char *) malloc(current_segment_length + 1);
@@ -133,7 +133,7 @@ parse(char* buffer, struct statsd_datagram** datagram) {
                 memcpy(tag_key, attr, current_segment_length + 1);
                 previous_delimiter = '=';
             } else if (buffer[i] == ',') {
-                if (!sanitize_string(attr, current_segment_length)) {
+                if (!sanitize_string(attr, current_segment_length) || !validate_metric_name_string(attr, current_segment_length)) {
                     goto error_clean_up;
                 }
                 (*datagram)->name = (char *) malloc(current_segment_length + 1);
@@ -254,11 +254,11 @@ main() {
     CHECK_ERROR("wow:2", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     CHECK_ERROR("wow|g", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     CHECK_ERROR("2|g", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
+    CHECK_ERROR("1:1|c", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     SUITE_HEADER("Basic values");
     CHECK_ERROR("example:1|c", "example", NULL, 1, METRIC_TYPE_COUNTER, 0);
     CHECK_ERROR("example:1|g", "example", NULL, 1, METRIC_TYPE_GAUGE, 0);
     CHECK_ERROR("example:1|ms", "example", NULL, 1, METRIC_TYPE_DURATION, 0);
-    CHECK_ERROR("1:1|c", "1", NULL, 1, METRIC_TYPE_COUNTER, 0);
     SUITE_HEADER("Sanitizable metric name");
     CHECK_ERROR("e x-2 ple:20|c", "e_x_2_ple", NULL, 20, METRIC_TYPE_COUNTER, 0);
     SUITE_HEADER("Non integer values")

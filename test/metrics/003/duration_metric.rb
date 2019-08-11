@@ -89,7 +89,7 @@ if stderr.empty?
   end
 else
   err_count = err_count + 1
-  duration_status = "- " + "✖".red + "Unable to get statsd.test_duration"
+  duration_status = "- " + "✖".red + " Unable to get statsd.test_duration"
 end
 
 print "\r"

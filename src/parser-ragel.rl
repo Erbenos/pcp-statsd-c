@@ -38,6 +38,7 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 	int tag_key_allocated = 0;
 	int tag_value_allocated = 0;
 	int any_tags = 0;
+	int name_start = 0;
 
 	%%{
 
@@ -51,6 +52,10 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 
 		action increment_character_counter {
 			current_index++;
+		}
+
+		action name_parsing {
+			current_segment_start_index = current_index;
 		}
 
 		action name_parsed {
@@ -174,15 +179,15 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 			current_segment_start_index = current_index + 1;
 		}
 
-		str_value = ([a-zA-Z]{1})([a-zA-Z0-9_\-/ .]{1,})?;
-		tag_value = [a-zA-Z0-9_\-/ .]{1,};
+		str_value = [a-z][a-zA-Z0-9_\-/ .]*;
+		tag_string = [a-zA-Z0-9_\-/ .]{1,};
 		name = str_value[:,]{1};
 		value = ('+'|'-')?[0-9]{1,310}([.][0-9]{1,310})?('|');
 		type = ('c'|'g'|'ms')('@'|'\0'|'\n\0');
-		tags = ((str_value'=')@tag_key_parsed(tag_value(':'|',')@tag_value_parsed))+;
+		tags = ((tag_string'=')@tag_key_parsed(tag_string(':'|',')@tag_value_parsed))+;
 		sampling = ([0-9]{1,310}([.][0-9]{1,310})?)('\0'|'\n\0');
 		main := 
-			  ((name @name_parsed . (tags @ tag_parsed)? . value @value_parsed . type @type_parsed . (sampling @sampling_parsed)?))
+			  ((name >name_parsing @name_parsed . (tags @ tag_parsed)? . value @value_parsed . type @type_parsed . (sampling @sampling_parsed)?))
 			  $~increment_character_counter @!error_handler @/not_final_state_finish;
 		# */
 		# Initialize and execute.
@@ -235,11 +240,11 @@ main() {
     CHECK_ERROR("wow:2", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     CHECK_ERROR("wow|g", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     CHECK_ERROR("2|g", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
+    CHECK_ERROR("1:1|c", NULL, NULL, 0, METRIC_TYPE_NONE, 0);
     SUITE_HEADER("Basic values");
     CHECK_ERROR("example:1|c", "example", NULL, 1, METRIC_TYPE_COUNTER, 0);
     CHECK_ERROR("example:1|g", "example", NULL, 1, METRIC_TYPE_GAUGE, 0);
     CHECK_ERROR("example:1|ms", "example", NULL, 1, METRIC_TYPE_DURATION, 0);
-    CHECK_ERROR("1:1|c", "1", NULL, 1, METRIC_TYPE_COUNTER, 0);
     SUITE_HEADER("Sanitizable metric name");
     CHECK_ERROR("e x-2 ple:20|c", "e_x_2_ple", NULL, 20, METRIC_TYPE_COUNTER, 0);
     SUITE_HEADER("Non integer values")
