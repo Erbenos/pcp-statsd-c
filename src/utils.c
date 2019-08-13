@@ -31,6 +31,11 @@
 static pthread_mutex_t g_log_mutex;
 
 /**
+ * Used to signal threads that its time to go home
+ */
+static volatile int g_exit_flag = 0;
+
+/**
  * Flag used to determine if VERBOSE output is allowed to be printed
  */
 static int g_verbose_flag = 0;
@@ -152,26 +157,6 @@ sanitize_metric_val_string(char* src) {
 }
 
 /**
- * Validates string
- * Checks if string is convertible to double and is not empty.
- * @arg src - String to be validated
- * @return 1 on success
- */
-int
-sanitize_sampling_val_string(char* src) {
-    size_t segment_length = strlen(src);
-    if (segment_length == 0) {
-        return 0;
-    }
-    char* end;
-    strtod(src, &end);
-    if (src == end || *end != '\0') {
-        return 0;
-    }
-    return 1;
-}
-
-/**
  * Validates type string
  * Checks if string is matching one of metric identifiers ("ms" = duration, "g" = gauge, "c" = counter)
  * @arg src - String to be validated
@@ -220,6 +205,16 @@ log_mutex_lock() {
 void
 log_mutex_unlock() {
     pthread_mutex_unlock(&g_log_mutex);
+}
+
+void
+set_exit_flag() {
+    __sync_fetch_and_add(&g_exit_flag, 1);
+}
+
+int
+check_exit_flag() {
+    return g_exit_flag;
 }
 
 /**

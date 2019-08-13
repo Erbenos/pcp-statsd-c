@@ -106,12 +106,10 @@ There may be multiple such messages in single datagram, split by a newline chara
 is valid as well.
 
 ```
-<metricname> = [a-z][a-zA-Z0-9_\-/ .]*
+<metricname> = [a-z][a-zA-Z0-9_.]*
 <value>      = described further in each metric type
 <type>       = 'c'|'g'|'ms'
 ```
-
-Metric name is farther sanitized to allow only alphanumerical characters and underscore.
 
 If verbose loggings is turned on, agent will log every message parsed and related failures.
 
@@ -218,13 +216,28 @@ StatsD datagrams may also contain _key:value_ pairs separated by commas like so:
 metric,tagX=X,tagW=W:5|c
 ```
 
+or so:
+
+```
+metric:5|c|#tagX:X,tagW:W
+```
+
 Where:
 - _tagX_ is key, _X_ is value
 - _tagW_ is key, _W_ is value
 
-Both _key_ and _value_ of such pair are under same restrictions as _metricname_.
+Both _key_ and _value_ of such pair are <code>[a-zA-Z0-9_.]{1,}</code>.
+
+Both formats are interchangeble and you may combine them together. When _key_ is not unique, right-most _value_ takes precedence. This is valid:
+
+```
+metric,tagX=1|c|#tagX:2
+```
+
+Pair with key _tagX_ will have value of _2_.
 
 You may use these labels to map specific values to some PCP instances. PCP labels are also assigned to these PCP instances.
+ragelPair are ordered by key in resulting instance name and label descriptor.
 
 Single label:
 

@@ -213,9 +213,15 @@ main(int argc, char** argv)
     init_data_ext(&data, &config, metrics, stats);
 
     chan_t* network_listener_to_parser = chan_init(config.max_unprocessed_packets);
-    if (network_listener_to_parser == NULL) DIE("Unable to create channel network listener -> parser.");
+    if (network_listener_to_parser == NULL) {
+        DIE("Unable to create channel network listener -> parser.");        
+    }
+    ALLOC_CHECK("Unable to create channel network listener -> parser.");
     chan_t* parser_to_aggregator = chan_init(config.max_unprocessed_packets);
-    if (parser_to_aggregator == NULL) DIE("Unable to create channel parser -> aggregator.");
+    if (parser_to_aggregator == NULL) {
+        DIE("Unable to create channel parser -> aggregator.");        
+    }
+    ALLOC_CHECK("Unable to create channel parser -> aggregator.");
 
     struct network_listener_args* listener_args = create_listener_args(&config, network_listener_to_parser);
     struct parser_args* parser_args = create_parser_args(&config, network_listener_to_parser, parser_to_aggregator);
@@ -257,6 +263,8 @@ main(int argc, char** argv)
     );
     pmdaConnect(&dispatch);
     pmdaMain(&dispatch);
+
+    set_exit_flag();
 
     if (pthread_join(network_listener, NULL) != 0) {
         DIE("Error joining network network listener thread.");

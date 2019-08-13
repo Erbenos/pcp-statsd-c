@@ -38,6 +38,7 @@ parser_exec(void* args) {
     struct timespec t0, t1;
     unsigned long time_spent_parsing;
     while(1) {
+        if (check_exit_flag()) break;
         *datagram = (struct unprocessed_statsd_datagram) { 0 };
         chan_recv(network_listener_to_parser, (void *)&datagram);
         struct statsd_datagram* parsed;
@@ -104,7 +105,6 @@ print_out_datagram(struct statsd_datagram* datagram) {
         default:
             printf("type: null \n");
     }
-    printf("sampling: %lf \n", datagram->sampling);
     printf("------------------------------ \n");
 }
 

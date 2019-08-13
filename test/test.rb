@@ -129,3 +129,6 @@ misc_tests.each{|s|
 # replace config with backup
 backup = FileUtils.cp("." + statsd_pmda_config, original_config)
 File.delete("." + statsd_pmda_config) if File.exist?("." + statsd_pmda_config)
+
+# deactivate agent
+stdout, stderr, status = Open3.capture3(". /etc/pcp.conf && cd $PCP_PMDAS_DIR/statsd && sudo make deactivate")
