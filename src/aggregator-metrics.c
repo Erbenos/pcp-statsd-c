@@ -171,7 +171,6 @@ free_metric(struct agent_config* config, struct metric* item) {
 void
 print_metric_meta(FILE* f, struct metric_metadata* meta) {
     if (meta != NULL) {        
-        fprintf(f, "sampling = %f\n", meta->sampling);
         if (meta->pcp_name) {
             fprintf(f, "pcp_name = %s\n", meta->pcp_name);
         }
@@ -444,7 +443,6 @@ create_metric_meta(struct statsd_datagram* datagram) {
     struct metric_metadata* meta = (struct metric_metadata*) malloc(sizeof(struct metric_metadata));
     ALLOC_CHECK("Unable to allocate memory for metric metadata.");
     *meta = (struct metric_metadata) { 0 };
-    meta->sampling = datagram->sampling;   
     meta->pmid = PM_ID_NULL;
     if (datagram->type == METRIC_TYPE_DURATION) {
         meta->pmindom = pmInDom_build(STATSD, STATSD_METRIC_DEFAULT_DURATION_INDOM);
