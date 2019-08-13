@@ -72,8 +72,8 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 		}
 
 		action tag_parsed {
-			size_t key_len = strlen(tag_key);
-			size_t value_len = strlen(tag_value);
+			size_t key_len = strlen(tag_key) + 1;
+			size_t value_len = strlen(tag_value) + 1;
 			struct tag* t = (struct tag*) malloc(sizeof(struct tag));
 			ALLOC_CHECK("Unable to allocate memory for tag.");
 			t->key = (char*) malloc(key_len);

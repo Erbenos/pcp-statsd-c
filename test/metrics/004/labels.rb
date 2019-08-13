@@ -32,6 +32,13 @@ payloads.each { |payload|
   sleep(0.001)
 }
 
+exit
+
+(1..10000).each { |payload|
+  ds.send("fm_rails_importer_facts_import_duration:100|ms|#type=foreman_discovery", 0)
+  sleep(0.001);
+}
+
 # Standard duration
 (1..100).each { |payload|
   ds.send("label_test2:" + payload.to_s + "|ms", 0)
@@ -47,35 +54,34 @@ payloads.each { |payload|
 label_test_status = ""
 stdout, stderr, status = Open3.capture3("pminfo statsd.label_test -f")
 if stderr.empty?
-  lines = stdout.split "\n"
   # instance order is arbitrary but deterministic
-  unless lines[2].include?('inst [0 or "/"] value 0')
+  unless stdout.include?('"/"] value 0')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [0 or "/"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/"] is not correct' + "\n"
   end
-  unless lines[3].include?('inst [1 or "/tagX=X::tagY=Y"] value 2')
+  unless stdout.include?('"/tagX=X::tagY=Y"] value 2')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [1 or "/tagX=X::tagY=Y"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/tagX=X::tagY=Y"] is not correct' + "\n"
   end
-  unless lines[4].include?('inst [2 or "/tagA=A::tagB=B::tagC=C"]')
+  unless stdout.include?('"/tagA=A::tagB=B::tagC=C"]')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [2 or "/tagA=A::tagB=B::tagC=C"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/tagA=A::tagB=B::tagC=C"] is not correct' + "\n"
   end
-  unless lines[5].include?('inst [3 or "/A=A"] value 4')
+  unless stdout.include?('"/A=A"] value 4')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [3 or "/A=A"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/A=A"] is not correct' + "\n"
   end
-  unless lines[6].include?('inst [4 or "/A=A::B=B::C=C"] value 5')
+  unless stdout.include?('"/A=A::B=B::C=C"] value 5')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [4 or "/A=A::B=B::C=C"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/A=A::B=B::C=C"] is not correct' + "\n"
   end
-  unless lines[7].include?('inst [5 or "/tagX=X"] value 1')
+  unless stdout.include?('"/tagX=X"] value 1')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [5 or "/tagX=X"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/tagX=X"] is not correct' + "\n"
   end
-  unless lines[8].include?('inst [6 or "/A=10"] value 6')
+  unless stdout.include?('"/A=10"] value 6')
     err_count += 1
-    label_test_status << "- " + "✖".red + ' statsd.label_test inst [6 or "/A=10"] is not correct' + "\n"
+    label_test_status << "- " + "✖".red + ' statsd.label_test ["/A=10"] is not correct' + "\n"
   end
 else
   err_count += 1
@@ -84,43 +90,43 @@ end
 duration_status = ""
 stdout, stderr, status = Open3.capture3("pminfo statsd.label_test2 -f")
 if stderr.empty?
-  lines = stdout.split "\n"
+  puts stdout
   # instance order is arbitrary but deterministic
-  unless lines[11].include?('inst [9 or "/min::label=X"] value 2')
+  unless stdout.include?('"/min::label=X"] value 2')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [9 or "/min::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/min::label=X"] is not correct' + "\n"
   end
-  unless lines[12].include?('inst [10 or "/max::label=X"] value 200')
+  unless stdout.include?('"/max::label=X"] value 200')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [10 or "/max::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/max::label=X"] is not correct' + "\n"
   end
-  unless lines[13].include?('inst [11 or "/median::label=X"] value 100')
+  unless stdout.include?('"/median::label=X"] value 100')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [11 or "/median::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/median::label=X"] is not correct' + "\n"
   end
-  unless lines[14].include?('inst [12 or "/average::label=X"] value 101')
+  unless stdout.include?('"/average::label=X"] value 101')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [12 or "/average::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/average::label=X"] is not correct' + "\n"
   end
-  unless lines[15].include?('inst [13 or "/percentile90::label=X"] value 180')
+  unless stdout.include?('"/percentile90::label=X"] value 180')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [13 or "/percentile90::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/percentile90::label=X"] is not correct' + "\n"
   end
-  unless lines[16].include?('inst [14 or "/percentile95::label=X"] value 190')
+  unless stdout.include?('"/percentile95::label=X"] value 190')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [14 or "/percentile95::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/percentile95::label=X"] is not correct' + "\n"
   end
-  unless lines[17].include?('inst [15 or "/percentile99::label=X"] value 198')
+  unless stdout.include?('"/percentile99::label=X"] value 198')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [15 or "/percentile99::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/percentile99::label=X"] is not correct' + "\n"
   end
-  unless lines[18].include?('inst [16 or "/count::label=X"] value 100')
+  unless stdout.include?('"/count::label=X"] value 100')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [16 or "/count::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/count::label=X"] is not correct' + "\n"
   end
-  unless lines[19].include?('inst [17 or "/std_deviation::label=X"] value 57.73214009544424')
+  unless stdout.include?('"/std_deviation::label=X"] value 57.73214009544424')
     err_count += 1
-    duration_status << "- " + "✖".red + ' statsd.label_test2 inst [17 or "/std_deviation::label=X"] is not correct' + "\n"
+    duration_status << "- " + "✖".red + ' statsd.label_test2 ["/std_deviation::label=X"] is not correct' + "\n"
   end
 else
   err_count += 1
