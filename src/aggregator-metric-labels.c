@@ -1,4 +1,5 @@
 #include "aggregators.h"
+#include "parsers-utils.h"
 #include "aggregator-metrics.h"
 #include "aggregator-metric-labels.h"
 #include "dict-callbacks.h"
@@ -128,9 +129,9 @@ find_label_by_name(
 
 static char*
 create_instance_label_segment_str(char* tags) {
-    char buffer[200];
+    char buffer[JSON_BUFFER_SIZE];
     size_t tags_length = strlen(tags) + 1;
-    if (tags_length > 200) {
+    if (tags_length > JSON_BUFFER_SIZE) {
         return NULL;
     }
     size_t tag_char_index = 0;
