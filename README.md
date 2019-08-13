@@ -237,7 +237,7 @@ metric,tagX=1|c|#tagX:2
 Pair with key _tagX_ will have value of _2_.
 
 You may use these labels to map specific values to some PCP instances. PCP labels are also assigned to these PCP instances.
-ragelPair are ordered by key in resulting instance name and label descriptor.
+Pairs are ordered by key in resulting instance name and label descriptor.
 
 Single label:
 
