@@ -8,6 +8,7 @@
 #include <hdr/hdr_histogram.h>
 
 #include "pmdastatsd.h"
+#include "parsers-utils.h"
 #include "aggregator-metrics.h"
 #include "aggregator-stats.h"
 #include "aggregator-metric-labels.h"
@@ -65,8 +66,8 @@ get_next_pmInDom(pmdaExt* pmda) {
  */
 static char*
 create_instance_map_key(pmInDom indom) {
-    char buffer[1024];
-    int l = pmsprintf(buffer, 1024, "%s", pmInDomStr(indom)) + 1;
+    char buffer[JSON_BUFFER_SIZE];
+    int l = pmsprintf(buffer, JSON_BUFFER_SIZE, "%s", pmInDomStr(indom)) + 1;
     char* key = malloc(sizeof(char) * l);
     ALLOC_CHECK("Unable to allocate memory for instance key");
     memcpy(key, buffer, l);
@@ -157,7 +158,7 @@ map_labels_to_instances(struct metric* item, struct pmda_data_extension* data, s
     item->meta->pcp_instance_map->labels = (char**) malloc(sizeof(char*) * labels_count);
     ALLOC_CHECK("Unable to allocate memory for new instance domain map label references.");
     // - prepare for iteration
-    char buffer[1024];
+    char buffer[JSON_BUFFER_SIZE];
     size_t instance_name_length;
     //   - prepare format strings for duration instances
     static char* duration_metric_instance_keywords[] = {
@@ -190,7 +191,7 @@ map_labels_to_instances(struct metric* item, struct pmda_data_extension* data, s
                 instance_name_length = 
                     pmsprintf(
                         buffer,
-                        1024,
+                        JSON_BUFFER_SIZE,
                         duration_metric_instance_keywords[i],
                         label->meta->instance_label_segment_str
                     ) + 1;
@@ -202,7 +203,7 @@ map_labels_to_instances(struct metric* item, struct pmda_data_extension* data, s
             int label_offset = (label_index + root_offset);
             // counter/gauge has 1 instance per single metric_label, just add / to premade label string
             instances[label_offset].i_inst = label_offset;
-            instance_name_length = pmsprintf(buffer, 1024, "/%s", label->meta->instance_label_segment_str) + 1;
+            instance_name_length = pmsprintf(buffer, JSON_BUFFER_SIZE, "/%s", label->meta->instance_label_segment_str) + 1;
             instances[label_offset].i_name = (char*) malloc(sizeof(char) * instance_name_length);
             ALLOC_CHECK("Unable to allocate memory for instance description.");
             memcpy(instances[label_offset].i_name, buffer, instance_name_length);
