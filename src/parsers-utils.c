@@ -42,7 +42,7 @@ tag_collection_to_json(struct tag_collection* tags) {
                 continue;
             } 
         }
-        current_size += 
+        int pair_length = 
             pmsprintf(
                 buffer + current_size,
                 JSON_BUFFER_SIZE - current_size,
@@ -50,6 +50,7 @@ tag_collection_to_json(struct tag_collection* tags) {
                 current_tag->key,
                 current_tag->value
             );
+        current_size += pair_length;
         first_tag = 0;
     }
     if (current_size >= JSON_BUFFER_SIZE - 2) {

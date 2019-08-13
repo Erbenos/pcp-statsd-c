@@ -138,7 +138,7 @@ parse(char* buffer, struct statsd_datagram** datagram) {
                     tag_key = (char *) realloc(tag_key, current_segment_length + 1);
                     ALLOC_CHECK("Not enough memory for tag key buffer.");
                     tag_allocated_flags = tag_allocated_flags | 1 << 2;
-                    memcpy(tag_key, &buffer[segment_start], current_segment_length + 1);
+                    memcpy(tag_key, &buffer[segment_start], current_segment_length);
                     tag_key[current_segment_length] = '\0';
                     segment_type = 2;
                     segment_start = i + 1;
@@ -159,28 +159,26 @@ parse(char* buffer, struct statsd_datagram** datagram) {
                     tag_allocated_flags = tag_allocated_flags | 1 << 1;
                     memcpy(tag_value, &buffer[segment_start], current_segment_length + 1);
                     tag_value[current_segment_length] = '\0';
-                    size_t key_len = strlen(tag_key);
-                    size_t value_len = strlen(tag_value);
-                    if (key_len > 0 && value_len > 0) {
-                        struct tag* t = (struct tag*) malloc(sizeof(struct tag));
-                        ALLOC_CHECK("Unable to allocate memory for tag.");
-                        t->key = (char*) malloc(key_len);
-                        ALLOC_CHECK("Unable to allocate memory for tag key.");
-                        t->value = (char*) malloc(value_len);
-                        ALLOC_CHECK("Unable to allocate memory for tag value.");
-                        memcpy(t->key, tag_key, key_len);
-                        memcpy(t->value, tag_value, value_len);
-                        if (any_tags == 0) {
-                            tags = (struct tag_collection*) malloc(sizeof(struct tag_collection));
-                            ALLOC_CHECK("Unable to allocate memory for tag collection.");
-                            field_allocated_flags = field_allocated_flags | 1 << 0;
-                            *tags = (struct tag_collection) { 0 };
-                            any_tags = 1;
-                        }
-                        tags->values = (struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
-                        tags->values[tags->length] = t;
-                        tags->length++;
+                    size_t key_len = strlen(tag_key) + 1;
+                    size_t value_len = strlen(tag_value) + 1;
+                    struct tag* t = (struct tag*) malloc(sizeof(struct tag));
+                    ALLOC_CHECK("Unable to allocate memory for tag.");
+                    t->key = (char*) malloc(key_len);
+                    ALLOC_CHECK("Unable to allocate memory for tag key.");
+                    t->value = (char*) malloc(value_len);
+                    ALLOC_CHECK("Unable to allocate memory for tag value.");
+                    memcpy(t->key, tag_key, key_len);
+                    memcpy(t->value, tag_value, value_len);
+                    if (any_tags == 0) {
+                        tags = (struct tag_collection*) malloc(sizeof(struct tag_collection));
+                        ALLOC_CHECK("Unable to allocate memory for tag collection.");
+                        field_allocated_flags = field_allocated_flags | 1 << 0;
+                        *tags = (struct tag_collection) { 0 };
+                        any_tags = 1;
                     }
+                    tags->values = (struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
+                    tags->values[tags->length] = t;
+                    tags->length++;
                     free(tag_key);
                     free(tag_value);
                     tag_allocated_flags = 0;
