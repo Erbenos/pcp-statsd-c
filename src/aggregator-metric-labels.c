@@ -128,9 +128,9 @@ find_label_by_name(
 
 static char*
 create_instance_label_segment_str(char* tags) {
-    char buffer[100];
+    char buffer[200];
     size_t tags_length = strlen(tags) + 1;
-    if (tags_length > 100) { // this is just estimate
+    if (tags_length > 200) {
         return NULL;
     }
     size_t tag_char_index = 0;
@@ -187,16 +187,16 @@ create_label(
     struct metric_label_metadata* meta = 
         (struct metric_label_metadata*) malloc(sizeof(struct metric_label_metadata*));
     ALLOC_CHECK("Unable to allocate memory for metric label metadata.");
+    (*out)->meta = meta;
+    (*out)->type = METRIC_TYPE_NONE;
+    meta->instance_label_segment_str = NULL;
     char* label_segment_identifier = create_instance_label_segment_str(datagram->tags);
     if (label_segment_identifier == NULL) {
         free_metric_label(config, label);
         return 0;
     }
     meta->instance_label_segment_str = label_segment_identifier;
-    (*out)->meta = meta;
-    (*out)->type = item->type;
     (*out)->pair_count = datagram->tags_pair_count;
-    (*out)->value = NULL;
     int status = 0;
     switch (item->type) {
         case METRIC_TYPE_COUNTER:
@@ -211,6 +211,7 @@ create_label(
         default:
             status = 0;
     }
+    (*out)->type = item->type;
     if (!status) {
         free_metric_label(config, label);
     }    

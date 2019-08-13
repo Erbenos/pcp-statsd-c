@@ -68,7 +68,7 @@ network_listener_exec(void* args) {
         } else {
             struct unprocessed_statsd_datagram* datagram = (struct unprocessed_statsd_datagram*) malloc(sizeof(struct unprocessed_statsd_datagram));
             ALLOC_CHECK("Unable to assign memory for struct representing unprocessed datagrams.");
-            datagram->value = (char*) malloc(sizeof(char) * count);
+            datagram->value = (char*) malloc(sizeof(char) * count + 1);
             ALLOC_CHECK("Unable to assign memory for datagram value.");
             strncpy(datagram->value, buffer, count);
             datagram->value[count] = '\0';

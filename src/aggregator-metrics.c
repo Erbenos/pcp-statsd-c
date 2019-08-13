@@ -308,7 +308,7 @@ create_metric(struct agent_config* config, struct statsd_datagram* datagram, str
 
 /**
  * Adds metric to hashtable
- * @arg container - Metrics container 
+ * @arg container - Metrics container make
  * @arg item - Metric to be saved
  * 
  * Synchronized by mutex on pmda_metrics_container

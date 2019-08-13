@@ -24,12 +24,11 @@
 
 #define VERSION 0.9
 
-void signal_handler(int num) {
+void output_request_handler(int num) {
     if (num == SIGUSR1) {
         aggregator_request_output();
     }
 }
-
 
 #define SET_INST_NAME(name, index) \
     instance[index].i_inst = index; \
@@ -170,8 +169,8 @@ init_data_ext(
 int
 main(int argc, char** argv)
 {
-    signal(SIGUSR1, signal_handler);
-    
+    signal(SIGUSR1, output_request_handler);
+
     struct agent_config config = { 0 };
     struct pmda_data_extension data = { 0 };
     pthread_t network_listener;
@@ -265,7 +264,6 @@ main(int argc, char** argv)
     pmdaMain(&dispatch);
 
     set_exit_flag();
-
     if (pthread_join(network_listener, NULL) != 0) {
         DIE("Error joining network network listener thread.");
     }
