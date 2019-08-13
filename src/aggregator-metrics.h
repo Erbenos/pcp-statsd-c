@@ -32,7 +32,6 @@ struct pmdaInstid_map {
 struct metric_metadata {
     char* pcp_name; // name within pcp pmns
     struct pmdaInstid_map* pcp_instance_map; 
-    double sampling; // not used for anything as of right now
     pmID pmid; // this could be saved as char* as we convert it most of the time we access it
     pmInDom pmindom;
     size_t pcp_instance_domain_index;

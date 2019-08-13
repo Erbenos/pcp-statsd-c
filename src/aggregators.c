@@ -42,6 +42,7 @@ aggregator_exec(void* args) {
     struct timespec t0, t1;
     unsigned long time_spent_aggregating;
     while(1) {
+        if (check_exit_flag()) break;
         switch(chan_select(&parser_to_aggregator, 1, (void *)&message, NULL, 0, NULL)) {
             case 0:
             {

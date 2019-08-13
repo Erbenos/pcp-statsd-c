@@ -53,10 +53,11 @@ network_listener_exec(void* args) {
     VERBOSE_LOG("Waiting for datagrams.");
     freeaddrinfo(res);
     int max_udp_packet_size = config->max_udp_packet_size;
-    char *buffer = (char *) malloc(max_udp_packet_size);
+    char *buffer = (char *) malloc(max_udp_packet_size * sizeof(char));
     struct sockaddr_storage src_addr;
     socklen_t src_addr_len = sizeof(src_addr);
     while(1) {
+        if (check_exit_flag()) break;
         ssize_t count = recvfrom(fd, buffer, max_udp_packet_size, 0, (struct sockaddr*)&src_addr, &src_addr_len);
         if (count == -1) {
             DIE("%s", strerror(errno));

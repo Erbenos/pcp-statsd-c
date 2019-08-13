@@ -222,7 +222,7 @@ $stdout.flush
 if err_count == 0
   puts "✔".green + " Hardcoded stats update accordingly                 "
 else 
-  puts "✖".red + " Hardcoded stats are not updated_accordingly: " + err_count.to_s
+  puts "✖".red + " Hardcoded stats are not updated_accordingly: " + err_count.to_s + "   "
 end
 
 puts received_status

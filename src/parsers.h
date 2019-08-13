@@ -45,7 +45,6 @@ struct statsd_datagram
     int tags_pair_count;
     enum SIGN explicit_sign;
     double value;
-    double sampling;
 } statsd_datagram;
 
 typedef int (*datagram_parse_callback)(char*, struct statsd_datagram**);

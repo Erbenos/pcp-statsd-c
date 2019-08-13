@@ -55,6 +55,7 @@
     log_mutex_lock(); \
     pmNotifyErr(LOG_ALERT, format, ## __VA_ARGS__); \
     log_mutex_unlock(); \
+    exit(1) \
 
 /**
  * Prints warning message
@@ -94,15 +95,6 @@ int
 sanitize_metric_val_string(char* src);
 
 /**
- * Validates string
- * Checks if string is convertible to double and is not empty.
- * @arg src - String to be validated
- * @return 1 on success
- */
-int
-sanitize_sampling_val_string(char* src);
-
-/**
  * Validates type string
  * Checks if string is matching one of metric identifiers ("ms" = duration, "g" = gauge, "c" = counter)
  * @arg src - String to be validated
@@ -131,6 +123,12 @@ log_mutex_lock();
 
 void
 log_mutex_unlock();
+
+void
+set_exit_flag();
+
+int
+check_exit_flag();
 
 /**
  * Initializes debugging/verbose/tracing flags based on given config
