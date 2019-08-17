@@ -33,12 +33,7 @@ create_labels_dict(
         .keyDestructor	= str_hash_free_callback,
         .valDestructor	= metric_label_free_callback,
     };
-    struct pmda_metrics_dict_privdata* dict_data = 
-        (struct pmda_metrics_dict_privdata*) malloc(sizeof(struct pmda_metrics_dict_privdata));    
-    ALLOC_CHECK("Unable to create priv PMDA metrics container data.");
-    dict_data->config = config;
-    dict_data->container = container;
-    labels* children = dictCreate(&metric_label_dict_callbacks, dict_data);
+    labels* children = dictCreate(&metric_label_dict_callbacks, container->metrics_privdata);
     item->children = children;
     pthread_mutex_unlock(&container->mutex);
 }
@@ -76,24 +71,27 @@ process_labeled_datagram(
     }
     struct metric_label* label;
     int label_exists = find_label_by_name(container, item, label_key, &label);
+    int status = 0;
     if (label_exists) {
         int update_success = update_metric_value(config, container, label->type, datagram, &label->value);
         if (update_success != 1) {
             DEBUG_LOG("%s REASON: sematically incorrect values.", throwing_away_msg);
-            free(label_key);
-            return 0;
+            status = 0;
+        } else {
+            status = update_success;
         }
-        return update_success;
     } else {
         int create_success = create_label(config, item, datagram, &label);
         if (create_success) {
             add_label(container, item, label_key, label);
-            return 1;
+            status = create_success;
+        } else {
+            DEBUG_LOG("%s REASON: unable to create label.", throwing_away_msg);
+            status = 0;
         }
-        DEBUG_LOG("%s REASON: unable to create label.", throwing_away_msg);
-        free(label_key);
-        return 0;
     }
+    free(label_key);
+    return status;
 }
 
 /**

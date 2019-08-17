@@ -31,6 +31,20 @@ void
 aggregator_request_output();
 
 /**
+ * Sets flag which is checked in main aggregator loop. 
+ * If is true, aggregator loop stops processing parsed datagrams and will free incoming messages. 
+ * After channel will be emptied completely pthread exits.
+ */
+void
+set_aggregator_exit();
+
+/**
+ * Gets exit flag.
+ */
+int
+get_aggregator_exit();
+
+/**
  * Frees pointer to aggregator message
  * @arg message - Message to be freed
  */

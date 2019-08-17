@@ -32,8 +32,6 @@ payloads.each { |payload|
   sleep(0.001)
 }
 
-exit
-
 (1..10000).each { |payload|
   ds.send("fm_rails_importer_facts_import_duration:100|ms|#type=foreman_discovery", 0)
   sleep(0.001);
@@ -90,7 +88,6 @@ end
 duration_status = ""
 stdout, stderr, status = Open3.capture3("pminfo statsd.label_test2 -f")
 if stderr.empty?
-  puts stdout
   # instance order is arbitrary but deterministic
   unless stdout.include?('"/min::label=X"] value 2')
     err_count += 1
