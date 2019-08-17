@@ -24,7 +24,21 @@
  * Flag to capture USR1 signal event, which is supposed mark request to output currently recorded data in debug file 
  */
 static int g_output_requested = 0;
-static pthread_mutex_t g_output_requested_lock;
+
+/**
+ * Mutex guarding g_output_requested
+ */
+static pthread_mutex_t g_output_requested_mutex;
+
+/**
+ * Used to signal aggregator pthread that its time to go home
+ */
+static int g_aggregator_exit = 0;
+
+/**
+ * Used to prevent race conditions while exiting
+ */
+static pthread_mutex_t g_aggregator_exit_mutex;
 
 /**
  * Thread startpoint - passes down given datagram to aggregator to record value it contains
@@ -37,15 +51,20 @@ aggregator_exec(void* args) {
     struct pmda_metrics_container* metrics_container = ((struct aggregator_args*)args)->metrics_container;
     struct pmda_stats_container* stats_container = ((struct aggregator_args*)args)->stats_container;
     chan_t* parser_to_aggregator = ((struct aggregator_args*)args)->parser_to_aggregator;
-
     struct parser_to_aggregator_message* message;
     struct timespec t0, t1;
     unsigned long time_spent_aggregating;
-    while(1) {
-        if (check_exit_flag()) break;
+    int should_exit;
+    int exit_loop = 0;
+    while(1 && !exit_loop) {
+        should_exit = check_exit_flag();
         switch(chan_select(&parser_to_aggregator, 1, (void *)&message, NULL, 0, NULL)) {
             case 0:
             {
+                if (should_exit) {
+                    free_parser_to_aggregator_message(message);
+                    break;
+                }
                 process_stat(config, stats_container, STAT_RECEIVED, NULL);
                 switch (message->type) {
                     case PARSER_RESULT_PARSED:
@@ -68,19 +87,27 @@ aggregator_exec(void* args) {
                         break;
                 }
                 free_parser_to_aggregator_message(message);
+                break;
             }
-            break;
+            default:
+            {
+                if (get_aggregator_exit()) {
+                    exit_loop = 1;
+                    break;
+                }
+            }
+            pthread_mutex_lock(&g_output_requested_mutex);
+            if (g_output_requested) {
+                VERBOSE_LOG("Output of recorded values request caught.");
+                write_metrics_to_file(config, metrics_container);
+                write_stats_to_file(config, stats_container);
+                VERBOSE_LOG("Recorded values output.");
+                g_output_requested = 0;
+            }
+            pthread_mutex_unlock(&g_output_requested_mutex);
         }
-        pthread_mutex_lock(&g_output_requested_lock);
-        if (g_output_requested) {
-            VERBOSE_LOG("Output of recorded values request caught.");
-            write_metrics_to_file(config, metrics_container);
-            write_stats_to_file(config, stats_container);
-            VERBOSE_LOG("Recorded values output.");
-            g_output_requested = 0;
-        }
-        pthread_mutex_unlock(&g_output_requested_lock);
     }
+    VERBOSE_LOG("Aggregator thread exiting.");
     pthread_exit(NULL);
 }
 
@@ -89,9 +116,27 @@ aggregator_exec(void* args) {
  */
 void
 aggregator_request_output() {
-    pthread_mutex_lock(&g_output_requested_lock);
+    pthread_mutex_lock(&g_output_requested_mutex);
     g_output_requested = 1;
-    pthread_mutex_unlock(&g_output_requested_lock);
+    pthread_mutex_unlock(&g_output_requested_mutex);
+}
+
+/**
+ * Sets flag which is checked in main aggregator loop. 
+ * If is true, aggregator loop stops processing parsed datagrams and will free incoming messages. 
+ * After channel will be emptied completely pthread exits.
+ */
+void
+set_aggregator_exit() {
+    __sync_add_and_fetch(&g_aggregator_exit, 1);
+}
+
+/**
+ * Gets exit flag.
+ */
+int
+get_aggregator_exit() {
+    return g_aggregator_exit;
 }
 
 /**
@@ -106,6 +151,7 @@ free_parser_to_aggregator_message(struct parser_to_aggregator_message* message) 
         }
         free(message);
     }
+    message = NULL;
 }
 
 /**

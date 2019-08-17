@@ -82,15 +82,21 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 			t->value = (char*) malloc(value_len);
 			ALLOC_CHECK("Unable to allocate memory for tag value.");
 			memcpy(t->value, tag_value, value_len);
-			if (any_tags == 0) {
+			if (!any_tags) {
 				tags = (struct tag_collection*) malloc(sizeof(struct tag_collection));
 				ALLOC_CHECK("Unable to allocate memory for tag collection.");
-				*tags = (struct tag_collection) {0};
+				tags->values = (struct tag**) malloc(sizeof(struct tag*));
+				tags->values[0] = t;
+				tags->length = 1;
 				any_tags = 1;
+			} else {
+				struct tag** new_tags =
+					(struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
+				ALLOC_CHECK("Unable to allocate memory for tags");
+				tags->values = new_tags;
+				tags->values[tags->length] = t;
+				tags->length++;
 			}
-			tags->values = (struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
-			tags->values[tags->length] = t;
-			tags->length++;
 			free(tag_key);
 			free(tag_value);
 			tag_key = NULL;
@@ -177,11 +183,10 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 	if (any_tags) {
 		char* json = tag_collection_to_json(tags);
 		if (json != NULL) {
-			(*datagram)->tags = malloc(strlen(json) + 1);
 			(*datagram)->tags = json;
 			(*datagram)->tags_pair_count = tags->length;
 		}
-		free(tags);
+		free_tag_collection(tags);
 		if (tag_key_allocated) free(tag_key);
 		if (tag_value_allocated) free(tag_value);
 	}
@@ -191,6 +196,9 @@ ragel_parser_parse(char* str, struct statsd_datagram** datagram) {
 	return 1;
 
 	error_clean_up:
+	if (any_tags) {
+		free_tag_collection(tags);
+	}
 	if (tag_key_allocated) free(tag_key);
 	if (tag_value_allocated) free(tag_value);
 	if (str[length - 1] == '\n')

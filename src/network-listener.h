@@ -26,6 +26,13 @@ void*
 network_listener_exec(void* args);
 
 /**
+ * Frees unprocessed datagram 
+ * @arg datagram 
+ */
+void
+free_unprocessed_datagram(struct unprocessed_statsd_datagram* datagram);
+
+/**
  * Creates arguments for network listener thread
  * @arg config - Application config
  * @arg network_listener_to_parser - Network listener -> Parser

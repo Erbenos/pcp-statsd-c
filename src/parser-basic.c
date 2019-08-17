@@ -69,9 +69,7 @@ parse(char* buffer, struct statsd_datagram** datagram) {
     size_t i = 0;
     char previous_delimiter = ' ';
     size_t count = strlen(buffer) + 1;
-    char* segment = (char *) malloc(count); // cannot overflow since whole segment is count anyway
-    ALLOC_CHECK("Unable to assign memory for StatsD datagram message parsing.");
-    struct tag_collection* tags;
+    struct tag_collection* tags = NULL;
     char* tag_key = NULL;
     char* tag_value = NULL;
     char* attr;
@@ -169,16 +167,21 @@ parse(char* buffer, struct statsd_datagram** datagram) {
                     ALLOC_CHECK("Unable to allocate memory for tag value.");
                     memcpy(t->key, tag_key, key_len);
                     memcpy(t->value, tag_value, value_len);
-                    if (any_tags == 0) {
+                    if (!any_tags) {
                         tags = (struct tag_collection*) malloc(sizeof(struct tag_collection));
                         ALLOC_CHECK("Unable to allocate memory for tag collection.");
                         field_allocated_flags = field_allocated_flags | 1 << 0;
-                        *tags = (struct tag_collection) { 0 };
+                        tags->values = (struct tag**) malloc(sizeof(struct tag*));
+                        tags->values[0] = t;
+                        tags->length = 1;
                         any_tags = 1;
+                    } else {
+                        struct tag** new_tags = (struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
+                        ALLOC_CHECK("Unable to allocate memory for tags.");
+                        tags->values = new_tags;
+                        tags->values[tags->length] = t;
+                        tags->length++;
                     }
-                    tags->values = (struct tag**) realloc(tags->values, sizeof(struct tag*) * (tags->length + 1));
-                    tags->values[tags->length] = t;
-                    tags->length++;
                     free(tag_key);
                     free(tag_value);
                     tag_allocated_flags = 0;
@@ -282,14 +285,13 @@ parse(char* buffer, struct statsd_datagram** datagram) {
         }
 
     }
-    if (any_tags == 1) {
+    if (any_tags) {
         char* json = tag_collection_to_json(tags);
         if (json != NULL) {
-            (*datagram)->tags = malloc(strlen(json) + 1);
             (*datagram)->tags = json;
             (*datagram)->tags_pair_count = tags->length;
         }
-        free(tags);
+        free_tag_collection(tags);
         if (tag_allocated_flags & 1) {
             free(tag_key);
         }
@@ -300,6 +302,9 @@ parse(char* buffer, struct statsd_datagram** datagram) {
     return 1;
 
     error_clean_up:
+    if (any_tags) {
+        free_tag_collection(tags);
+    }
     if (tag_allocated_flags & 1) {
         free(tag_key);
     }

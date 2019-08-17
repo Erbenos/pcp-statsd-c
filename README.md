@@ -111,7 +111,7 @@ is valid as well.
 <type>       = 'c'|'g'|'ms'
 ```
 
-If verbose loggings is turned on, agent will log every message parsed and related failures.
+If debug logging is turned on, agent will log every message parsed and related failures.
 
 All recorded metrics will be available under <strong>statsd.*</strong> namespace.
 
@@ -231,7 +231,7 @@ Both _key_ and _value_ of such pair are <code>[a-zA-Z0-9_.]{1,}</code>.
 Both formats are interchangeble and you may combine them together. When _key_ is not unique, right-most _value_ takes precedence. This is valid:
 
 ```
-metric,tagX=1|c|#tagX:2
+metric,tagX=1:5|c|#tagX:2
 ```
 
 Pair with key _tagX_ will have value of _2_.

@@ -77,6 +77,7 @@ struct duration_values_meta {
 
 struct pmda_metrics_container {
     metrics* metrics;
+    struct pmda_metrics_dict_privdata* metrics_privdata;
     size_t generation;
     pthread_mutex_t mutex;
 } pmda_metrics_container;

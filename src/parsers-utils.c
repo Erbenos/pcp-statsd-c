@@ -64,6 +64,27 @@ tag_collection_to_json(struct tag_collection* tags) {
     return result;
 }
 
+void
+free_tag_collection(struct tag_collection* tags) {
+    if (tags != NULL) {
+        size_t i;
+        for (i = 0; i < tags->length; i++) {
+            struct tag* t = tags->values[i]; 
+            if (t != NULL) {
+                if (t->key != NULL) {
+                    free(t->key);
+                }
+                if (t->value != NULL) {
+                    free(t->value);
+                }
+                free(t);
+            }
+        }
+        free(tags->values);
+        free(tags);
+    }
+}
+
 static const char*
 metric_enum_to_str(enum METRIC_TYPE type) {
     const char* counter = "counter";

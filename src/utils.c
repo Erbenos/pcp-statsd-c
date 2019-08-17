@@ -31,9 +31,14 @@
 static pthread_mutex_t g_log_mutex;
 
 /**
+ * Used to prevent race conditions while exiting
+ */
+static pthread_mutex_t g_exit_mutex; 
+
+/**
  * Used to signal threads that its time to go home
  */
-static volatile int g_exit_flag = 0;
+static int g_exit_flag = 0;
 
 /**
  * Flag used to determine if VERBOSE output is allowed to be printed
@@ -209,7 +214,7 @@ log_mutex_unlock() {
 
 void
 set_exit_flag() {
-    __sync_fetch_and_add(&g_exit_flag, 1);
+    __sync_add_and_fetch(&g_exit_flag, 1);
 }
 
 int
