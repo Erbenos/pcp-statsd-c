@@ -65,6 +65,9 @@ struct tag_collection {
 char*
 tag_collection_to_json(struct tag_collection* tags);
 
+void
+free_tag_collection(struct tag_collection* tags);
+
 int
 assert_statsd_datagram_eq(
     struct statsd_datagram** datagram,
