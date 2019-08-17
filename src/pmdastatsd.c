@@ -176,9 +176,7 @@ free_shared_data(struct agent_config* config, struct pmda_data_extension* data) 
     // clear PCP instance domains
     for (i = 0; i < data->pcp_instance_domain_count; i++) {
         int j = 0;
-        VERBOSE_LOG("FREEING %lu -th instance domain", i);
         for (j; j < data->pcp_instance_domains[i].it_numinst; j++) {
-            VERBOSE_LOG("FREEING %d -th instance domain name", j);
             free(data->pcp_instance_domains[i].it_set[j].i_name);
         }
         free(data->pcp_instance_domains[i].it_set);
@@ -217,13 +215,10 @@ init_data_ext(
 
 static void
 main_PDU_loop(pmdaInterface* dispatch) {
-    VERBOSE_LOG("Entering main loop");
     for(;;) {
-        VERBOSE_LOG("INSIDE LOOP");
         if (check_exit_flag() != 0) break;
         if (__pmdaMainPDU(dispatch) < 0) break;
     }
-    VERBOSE_LOG("Exiting main loop");
 }
 
 int
@@ -334,7 +329,6 @@ main(int argc, char** argv)
     );
     pmdaConnect(&dispatch);
     main_PDU_loop(&dispatch);
-    VERBOSE_LOG("Main PDU loop interrupted.");
     
     if (pthread_join(network_listener, NULL) != 0) {
         DIE("Error joining network network listener thread.");
