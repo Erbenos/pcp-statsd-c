@@ -45,6 +45,7 @@ init_pmda_metrics(struct agent_config* config) {
     metrics* m = dictCreate(&metric_dict_callbacks, dict_data);
     container->metrics = m;
     container->generation = 0;
+    container->metrics_privdata = dict_data;
     return container;
 }
 
@@ -54,7 +55,7 @@ init_pmda_metrics(struct agent_config* config) {
  */
 char*
 create_metric_dict_key(char* key) {
-    size_t maximum_key_size = 4096;
+    size_t maximum_key_size = 2048;
     char buffer[maximum_key_size]; // maximum key size
     int key_size = pmsprintf(
         buffer,
@@ -79,56 +80,61 @@ int
 process_metric(struct agent_config* config, struct pmda_metrics_container* container, struct statsd_datagram* datagram) {
     struct metric* item;
     char throwing_away_msg[] = "Throwing away datagram.";
-    char* key = create_metric_dict_key(datagram->name);
-    if (key == NULL) {
+    char* metric_key = create_metric_dict_key(datagram->name);
+    if (metric_key == NULL) {
         DEBUG_LOG("%s REASON: unable to create hashtable key for metric record.", throwing_away_msg);
         return 0;
     }
-    int metric_exists = find_metric_by_name(container, key, &item);
+    int status = 0;
+    int metric_exists = find_metric_by_name(container, metric_key, &item);
     if (metric_exists) {
         int datagram_contains_tags = datagram->tags != NULL;
         if (!datagram_contains_tags) {
             int res = update_metric_value(config, container, item->type, datagram, &item->value);
             if (res == 0) {
                 DEBUG_LOG("%s REASON: semantically incorrect values.", throwing_away_msg);
-                return 0;
+                status = 0;
             } else if (res == -1) {
                 DEBUG_LOG("%s REASON: metric of same name but different type is already recorded.", throwing_away_msg);
-                return 0;
+                status = 0;
+            } else {
+                status = 1;
             }
-            return 1;
+        } else {
+            int label_success = process_labeled_datagram(config, container, item, datagram);
+            status = label_success;
         }
-        int label_success = process_labeled_datagram(config, container, item, datagram);
-        return label_success;
     } else {
-        int name_available = check_metric_name_available(container, key);
+        int name_available = check_metric_name_available(container, metric_key);
         if (name_available) {
             int correct_semantics = create_metric(config, datagram, &item);
             if (correct_semantics) {
-                add_metric(container, key, item);
+                add_metric(container, metric_key, item);
                 int datagram_contains_tags = datagram->tags != NULL;
-                int complete = 1;
+                status = 1;
                 if (datagram_contains_tags) {
-                    complete = 0;
+                    status = 0;
                     int label_success = process_labeled_datagram(config, container, item, datagram);
                     if (!label_success) {
-                        remove_metric(container, key);
+                        remove_metric(container, metric_key);
                     } else {
                         mark_metric_as_pernament(container, item);
-                        complete = 1;
+                        status = 1;
                     }
                 } else {
                     mark_metric_as_pernament(container, item);
                 }
-                return complete;
+            } else {
+                DEBUG_LOG("%s REASON: semantically incorrect values.", throwing_away_msg);
+                status = 0;
             }
-            DEBUG_LOG("%s REASON: semantically incorrect values.", throwing_away_msg);
-            return 0;
         } else {
             DEBUG_LOG("%s REASON: name is not available. (blacklisted?)", throwing_away_msg);
-            return 0;
+            status = 0;
         }
     }
+    free(metric_key);
+    return status;
 }
 
 /**
@@ -143,6 +149,9 @@ free_metric(struct agent_config* config, struct metric* item) {
     }
     if (item->meta != NULL) {
         free_metric_metadata(item->meta);
+    }
+    if (item->children != NULL) {
+        dictRelease(item->children);
     }
     switch (item->type) {
         case METRIC_TYPE_COUNTER:
@@ -171,7 +180,6 @@ free_metric(struct agent_config* config, struct metric* item) {
 void
 print_metric_meta(FILE* f, struct metric_metadata* meta) {
     if (meta != NULL) {        
-        fprintf(f, "sampling = %f\n", meta->sampling);
         if (meta->pcp_name) {
             fprintf(f, "pcp_name = %s\n", meta->pcp_name);
         }
@@ -201,8 +209,9 @@ write_metrics_to_file(struct agent_config* config, struct pmda_metrics_container
         pmGetConfig("PCP_PMDAS_DIR"),
         sep, sep, config->debug_output_filename);
     FILE* f;
-    f = fopen(config->debug_output_filename, "a+");
+    f = fopen(debug_output, "a+");
     if (f == NULL) {
+        VERBOSE_LOG("Unable to open file for output.");
         return;
     }
     dictIterator* iterator = dictGetSafeIterator(m);
@@ -308,7 +317,7 @@ create_metric(struct agent_config* config, struct statsd_datagram* datagram, str
 
 /**
  * Adds metric to hashtable
- * @arg container - Metrics container 
+ * @arg container - Metrics container make
  * @arg item - Metric to be saved
  * 
  * Synchronized by mutex on pmda_metrics_container
@@ -411,6 +420,14 @@ check_metric_name_available(struct pmda_metrics_container* container, char* key)
         "pmda.metrics_tracked",
         "pmda.time_spent_aggregating",
         "pmda.time_spent_parsing",
+        "pmda.settings.max_udp_packet_size",
+        "pmda.settings.max_unprocessed_packets",
+        "pmda.settings.verbose",
+        "pmda.settings.debug",
+        "pmda.settings.debug_output_filename",
+        "pmda.settings.port",
+        "pmda.settings.parser_type",
+        "pmda.settings.duration_aggregation_type"
     };
     size_t i;
     for (i = 0; i < sizeof(g_blacklist) / sizeof(g_blacklist[0]); i++) {
@@ -435,15 +452,14 @@ create_metric_meta(struct statsd_datagram* datagram) {
     struct metric_metadata* meta = (struct metric_metadata*) malloc(sizeof(struct metric_metadata));
     ALLOC_CHECK("Unable to allocate memory for metric metadata.");
     *meta = (struct metric_metadata) { 0 };
-    meta->sampling = datagram->sampling;   
     meta->pmid = PM_ID_NULL;
     if (datagram->type == METRIC_TYPE_DURATION) {
         meta->pmindom = pmInDom_build(STATSD, STATSD_METRIC_DEFAULT_DURATION_INDOM);
     } else {
         meta->pmindom = pmInDom_build(STATSD, STATSD_METRIC_DEFAULT_INDOM);
     }
-    char name[100];
-    size_t len = pmsprintf(name, 100, "statsd.%s", datagram->name) + 1;
+    char name[1024];
+    size_t len = pmsprintf(name, 1024, "statsd.%s", datagram->name) + 1;
     meta->pcp_name = (char*) malloc(sizeof(char) * len);
     ALLOC_CHECK("Unable to allocate memory for metric pcp name");
     memcpy((char*)meta->pcp_name, name, len);

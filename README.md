@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/Erbenos/pcp-statsd-c.svg?branch=pcp)](https://travis-ci.com/Erbenos/pcp-statsd-c)
+[![Build Status](https://travis-ci.com/Erbenos/pcp-statsd-c.svg?branch=master)](https://travis-ci.com/Erbenos/pcp-statsd-c)
+
+This work was integrated into main [PCP repository](https://github.com/performancecopilot/pcp) and build upon further there.
 
 # pmdastatsd - Performance Metric Domain Agent for StatsD
 
@@ -64,7 +66,6 @@ Agent looks for *pmdastatsd.ini* within it's root directory by default.
 It accepts following parameters:
 
 - **max_udp_packet_size** - Maximum allowed packet size <br>default: _1472_
-- **tcp_address** - On which IP is agent listening for incoming trafic <br>default: _0.0.0.0_
 - **port** - On which port is agent listening for incoming trafic <br>default: _8125_
 - **verbose** - Flag controlling whether or not to allow verbose logging <br>default: _1_
 - **debug** - Flag controlling whether or not to allow debug logging <br>default: _0_
@@ -79,7 +80,6 @@ It accepts following parameters:
 Agent accepts all arguments that any PMDA accepts by default, including those specified above, in following form:
 
 - --max-udp, -Z
-- --tcp-address, -t
 - --port, -P
 - --verbose, -v
 - --debug, -g
@@ -108,12 +108,12 @@ There may be multiple such messages in single datagram, split by a newline chara
 is valid as well.
 
 ```
-<metricname> = [a-zA-Z0-9_\-/ .]{1,}
+<metricname> = [a-z][a-zA-Z0-9_.]*
 <value>      = described further in each metric type
 <type>       = 'c'|'g'|'ms'
 ```
 
-If verbose loggings is turned on, agent will log every message parsed and related failures.
+If debug logging is turned on, agent will log every message parsed and related failures.
 
 All recorded metrics will be available under <strong>statsd.*</strong> namespace.
 
@@ -218,13 +218,28 @@ StatsD datagrams may also contain _key:value_ pairs separated by commas like so:
 metric,tagX=X,tagW=W:5|c
 ```
 
+or so:
+
+```
+metric:5|c|#tagX:X,tagW:W
+```
+
 Where:
 - _tagX_ is key, _X_ is value
 - _tagW_ is key, _W_ is value
 
-Both _key_ and _value_ of such pair are under same restrictions as _metricname_.
+Both _key_ and _value_ of such pair are <code>[a-zA-Z0-9_.]{1,}</code>.
+
+Both formats are interchangeble and you may combine them together. When _key_ is not unique, right-most _value_ takes precedence. This is valid:
+
+```
+metric,tagX=1:5|c|#tagX:2
+```
+
+Pair with key _tagX_ will have value of _2_.
 
 You may use these labels to map specific values to some PCP instances. PCP labels are also assigned to these PCP instances.
+Pairs are ordered by key in resulting instance name and label descriptor.
 
 Single label:
 
@@ -284,23 +299,68 @@ inst [10 or "/max::target=cpu0"] labels {"target":"cpu0"}
 ## Hardcoded stats
 Agent also exports metrics about itself:
 
-- **statsd.pmda.received** <br>Number of datagrams that the agent has received
-- **statsd.pmda.parsed** <br>Number of datagrams that were successfully parsed
-- **statsd.pmda.dropped** <br>Number of datagrams that were dropped
-- **statsd.pmda.aggregated** <br>Number of datagrams that were aggregated
-- **statsd.pmda.metrics_tracked**
-    - **counter** - Number of tracked counter metrics
-    - **gauge** - Number of tracked gauge metrics
-    - **duration** - Number of tracked duration metrics
-    - **total** - Number of tracked metrics total
-- **statsd.pmda.time_spent_parsing** <br>Total time in nanoseconds spent parsing metrics
-- **statsd.pmda.time_spent_aggregating** <br>Total time in nanoseconds spent aggregating metrics
+<details>
+    <summary><strong>statsd.pmda.received</strong></summary>
+    Number of datagrams that the agent has received
+</details>
+<details>
+    <summary><strong>statsd.pmda.parsed</strong></summary>
+    Number of datagrams that were successfully parsed
+</details>
+<details>
+    <summary><strong>statsd.pmda.dropped</strong></summary>
+    Number of datagrams that were dropped
+</details>
+<details>
+    <summary><strong>statsd.pmda.aggregated</strong></summary>
+    Number of datagrams that were aggregated
+</details>
+<details>
+    <summary><strong>statsd.pmda.metrics_tracked</strong></summary>
+    <ul>
+        <li><strong>counter</strong> - Number of tracked counter metrics</li>
+        <li><strong>gauge</strong> - Number of tracked gauge metrics</li>
+        <li><strong>duration</strong> - Number of tracked duration metrics</li>
+        <li><strong>total</strong> - Number of tracked metrics total</li>
+    </ul>
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.max_udp_packet_size</strong></summary>
+    Maximum UDP packet size
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.max_unprocessed_packets</strong></summary>
+    Maximum size of unprocessed packets Q
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.verbose</strong></summary>
+    Verbosity flag
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.debug</strong></summary>
+    Debug flag
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.debug_output_filename</strong></summary>
+    Debug output filename
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.port</strong></summary>
+    Port that is listened to
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.parser_type</strong></summary>
+    Used parser type
+</details>
+<details>
+    <summary><strong>statsd.pmda.settings.duration_aggregation_type</strong></summary>
+    Used duration aggregation type
+</details>
 
 These names are blacklisted for user usage. No messages with these names will processed. While not yet reserved, whole <strong>statsd.pmda.*</strong> namespace is not recommended to use for user metrics.
 
 # Roadmap
 - Make sure code is optimized
-- Add more tests
 - Allow _value_ to be expressed in _e_ notation
 
 # FAQ
