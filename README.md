@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/Erbenos/pcp-statsd-c.svg?branch=pcp)](https://travis-ci.com/Erbenos/pcp-statsd-c)
+[![Build Status](https://travis-ci.com/Erbenos/pcp-statsd-c.svg?branch=master)](https://travis-ci.com/Erbenos/pcp-statsd-c)
+
+This work was integrated into main [PCP repository](https://github.com/performancecopilot/pcp) and build upon further there.
 
 # pmdastatsd - Performance Metric Domain Agent for StatsD
 
