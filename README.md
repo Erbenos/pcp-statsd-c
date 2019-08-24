@@ -1,10 +1,14 @@
 [![Build Status](https://travis-ci.com/Erbenos/pmdastatsd.svg?branch=master)](https://travis-ci.com/Erbenos/pmdastatsd)
 
-This work was integrated into main [PCP repository](https://github.com/performancecopilot/pcp) and is build upon further there.
+This work was integrated into main [PCP repository](https://github.com/performancecopilot/pcp) as [pmdastatsd](https://github.com/performancecopilot/pcp/tree/master/src/pmdas/statsd) and is build upon further there.
+
+### What got merged
+Everything apart from the tests. PCP community prefers Python for them, so they were rewritten and extended ([see fork](https://github.com/Erbenos/pcp/tree/master/qa/statsd), testcase qa/1599), but are not yet integrated in PCP quality assurance process. Merging by itself required changes to the code, so there are differences between what is in this repository and what is in PCP tree. After merge, some improvements were, and will be made, as well.
+
+### What is left to do
+Integrate tests into PCP quality assurance process.
 
 # pmdastatsd - Performance Metric Domain Agent for StatsD
-
-_(under development, not yet recommended for production use)_
 
 This repository contains an agent that collects [StatsD](https://github.com/statsd/statsd) data, aggregates them and makes them available to any Performance Co-Pilot client, which is ideal for easily tracking stats in your application.
 
@@ -360,7 +364,7 @@ Agent also exports metrics about itself:
 These names are blacklisted for user usage. No messages with these names will processed. While not yet reserved, whole <strong>statsd.pmda.*</strong> namespace is not recommended to use for user metrics.
 
 # Roadmap
-- Make sure code is optimized
+- Integrate tests
 - Allow _value_ to be expressed in _e_ notation
 
 # FAQ
