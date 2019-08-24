@@ -3,10 +3,10 @@
 This work was integrated into main [PCP repository](https://github.com/performancecopilot/pcp) as [pmdastatsd](https://github.com/performancecopilot/pcp/tree/master/src/pmdas/statsd) and is build upon further there.
 
 ### What got merged
-Everything apart from the tests. PCP community prefers Python for them, so they were rewritten and extended ([see fork](https://github.com/Erbenos/pcp/tree/master/qa/statsd), testcase qa/1599), but are not yet integrated in PCP quality assurance process. Merging by itself required changes to the code, so there are differences between what is in this repository and what is in PCP tree. After merge, some improvements were, and will be made, as well.
+Everything apart from the tests. PCP community prefers Python for them, so they were rewritten and extended ([see fork](https://github.com/Erbenos/pcp/tree/master/qa/statsd), testcase qa/1599), but are not yet integrated in PCP quality assurance process. Merging by itself required changes to the code, so there are differences between what is in this repository and what is in PCP tree. After merge, some improvements were, and will be, made as well.
 
 ### What is left to do
-Integrate tests into PCP quality assurance process.
+Integrate tests into PCP quality assurance process. Extend parsers to accept scientific notation.
 
 # pmdastatsd - Performance Metric Domain Agent for StatsD
 
