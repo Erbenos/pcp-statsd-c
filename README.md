@@ -8,6 +8,9 @@ Everything apart from the tests. PCP community prefers Python for them, so they 
 ### What is left to do
 Integrate tests into PCP quality assurance process. Extend parsers to accept scientific notation.
 
+#### Edit:
+- **scientific notation** merged with [PR #735](https://github.com/performancecopilot/pcp/pull/735)
+
 # pmdastatsd - Performance Metric Domain Agent for StatsD
 
 This repository contains an agent that collects [StatsD](https://github.com/statsd/statsd) data, aggregates them and makes them available to any Performance Co-Pilot client, which is ideal for easily tracking stats in your application.
