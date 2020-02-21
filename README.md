@@ -10,6 +10,7 @@ Integrate tests into PCP quality assurance process. Extend parsers to accept sci
 
 #### Edit:
 - **scientific notation** merged with [PR #735](https://github.com/performancecopilot/pcp/pull/735)
+- **qa assurance** [PR #836](https://github.com/performancecopilot/pcp/pull/836), [PR #844](https://github.com/performancecopilot/pcp/pull/844), [PR #849](https://github.com/performancecopilot/pcp/pull/849)
 
 # pmdastatsd - Performance Metric Domain Agent for StatsD
 
